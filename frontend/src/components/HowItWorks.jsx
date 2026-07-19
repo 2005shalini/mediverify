@@ -1,55 +1,91 @@
-function HowItWorks() {
+import {
+    Upload,
+    Bot,
+    Stethoscope,
+    BadgeCheck,
+    ChevronRight,
+  } from "lucide-react";
+  
+  function HowItWorks() {
+    const steps = [
+      {
+        icon: <Upload size={40} className="text-blue-600" />,
+        title: "Upload Reports",
+        description:
+          "Upload prescriptions, lab reports and medical scans securely.",
+      },
+      {
+        icon: <Bot size={40} className="text-blue-600" />,
+        title: "AI Analysis",
+        description:
+          "Our AI analyzes your reports and prepares an easy-to-understand summary.",
+      },
+      {
+        icon: <Stethoscope size={40} className="text-blue-600" />,
+        title: "Doctor Review",
+        description:
+          "Verified doctors review your reports for an accurate second opinion.",
+      },
+      {
+        icon: <BadgeCheck size={40} className="text-blue-600" />,
+        title: "Get Recommendation",
+        description:
+          "Receive personalized treatment recommendations from experts.",
+      },
+    ];
+  
     return (
-      <section className="py-20 bg-white">
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
+  
+          {/* Heading */}
   
           <div className="text-center">
             <h2 className="text-4xl font-bold">
               How It Works
             </h2>
   
-            <p className="mt-4 text-gray-600">
-              Get your medical reports verified in just three simple steps.
+            <p className="mt-4 text-gray-500 max-w-2xl mx-auto">
+              Get your treatment verified in four simple steps with the help of
+              AI and experienced medical professionals.
             </p>
           </div>
   
-          <div className="grid md:grid-cols-3 gap-10 mt-16">
+          {/* Steps */}
   
-            <div className="bg-slate-50 p-8 rounded-2xl shadow text-center">
-              <h3 className="text-2xl font-bold text-blue-600">01</h3>
+          <div className="grid md:grid-cols-4 gap-8 mt-16">
   
-              <h4 className="mt-4 text-xl font-semibold">
-                Upload Report
-              </h4>
+            {steps.map((step, index) => (
+              <div key={index} className="relative">
   
-              <p className="mt-3 text-gray-600">
-                Upload your medical report securely.
-              </p>
-            </div>
+                {/* Arrow */}
   
-            <div className="bg-slate-50 p-8 rounded-2xl shadow text-center">
-              <h3 className="text-2xl font-bold text-blue-600">02</h3>
+                {index !== steps.length - 1 && (
+                  <div className="hidden md:flex absolute top-12 -right-6 z-10">
+                    <ChevronRight className="text-gray-300" size={28} />
+                  </div>
+                )}
   
-              <h4 className="mt-4 text-xl font-semibold">
-                AI Analysis
-              </h4>
+                {/* Card */}
   
-              <p className="mt-3 text-gray-600">
-                AI performs an initial analysis of your report.
-              </p>
-            </div>
+                <div className="bg-slate-50 rounded-2xl p-8 text-center shadow-sm hover:shadow-xl transition duration-300 h-full">
   
-            <div className="bg-slate-50 p-8 rounded-2xl shadow text-center">
-              <h3 className="text-2xl font-bold text-blue-600">03</h3>
+                  <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
+                    {step.icon}
+                  </div>
   
-              <h4 className="mt-4 text-xl font-semibold">
-                Doctor Verification
-              </h4>
+                  <h3 className="mt-6 text-xl font-semibold">
+                    {step.title}
+                  </h3>
   
-              <p className="mt-3 text-gray-600">
-                A verified doctor reviews and confirms the report.
-              </p>
-            </div>
+                  <p className="mt-4 text-gray-500 text-sm leading-7">
+                    {step.description}
+                  </p>
+  
+                </div>
+  
+              </div>
+            ))}
   
           </div>
   
