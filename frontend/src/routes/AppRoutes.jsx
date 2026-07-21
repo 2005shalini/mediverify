@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
 import CreateConsultation from "../pages/CreateConsultation";
+import AIAnalysis from "../pages/AIAnalysis";
 
 export default function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export default function AppRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create-consultation" element={<CreateConsultation />} />
+        <Route path="/ai-analysis" element={<AIAnalysis />} />
       </Routes>
     </BrowserRouter>
   );
