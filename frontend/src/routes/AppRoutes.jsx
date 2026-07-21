@@ -8,6 +8,7 @@ import CreateConsultation from "../pages/CreateConsultation";
 import AIAnalysis from "../pages/AIAnalysis";
 import DoctorSelection from "../pages/DoctorSelection";
 import PaymentPage from "../pages/PaymentPage";
+import ConsultationDetails from "../pages/ConsultationDetails";
 
 export default function AppRoutes() {
   return (
@@ -21,6 +22,7 @@ export default function AppRoutes() {
         <Route path="/ai-analysis" element={<AIAnalysis />} />
         <Route path="/doctor-selection" element={<DoctorSelection />} />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/consultation-details" element={<ConsultationDetails />} />
       </Routes>
     </BrowserRouter>
   );
