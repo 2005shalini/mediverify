@@ -6,6 +6,7 @@ import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
 import CreateConsultation from "../pages/CreateConsultation";
 import AIAnalysis from "../pages/AIAnalysis";
+import DoctorSelection from "../pages/DoctorSelection";
 
 export default function AppRoutes() {
   return (
@@ -17,6 +18,7 @@ export default function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create-consultation" element={<CreateConsultation />} />
         <Route path="/ai-analysis" element={<AIAnalysis />} />
+        <Route path="/doctor-selection" element={<DoctorSelection />} />
       </Routes>
     </BrowserRouter>
   );
