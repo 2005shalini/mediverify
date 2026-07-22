@@ -13,6 +13,7 @@ import ChatPage from "../pages/ChatPage";
 import ProfilePage from "../pages/ProfilePage";
 import DoctorDashboard from "../pages/DoctorDashboard";
 import DoctorReviewPage from "../pages/DoctorReviewPage";
+import AdminDashboard from "../pages/AdminDashboard";
 
 export default function AppRoutes() {
   return (
@@ -31,6 +32,7 @@ export default function AppRoutes() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
         <Route path="/doctor-review" element={<DoctorReviewPage />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );
