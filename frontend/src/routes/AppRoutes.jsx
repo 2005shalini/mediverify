@@ -12,6 +12,7 @@ import ConsultationDetails from "../pages/ConsultationDetails";
 import ChatPage from "../pages/ChatPage";
 import ProfilePage from "../pages/ProfilePage";
 import DoctorDashboard from "../pages/DoctorDashboard";
+import DoctorReviewPage from "../pages/DoctorReviewPage";
 
 export default function AppRoutes() {
   return (
@@ -29,6 +30,7 @@ export default function AppRoutes() {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+        <Route path="/doctor-review" element={<DoctorReviewPage />} />
       </Routes>
     </BrowserRouter>
   );
