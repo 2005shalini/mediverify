@@ -14,6 +14,7 @@ import ProfilePage from "../pages/ProfilePage";
 import DoctorDashboard from "../pages/DoctorDashboard";
 import DoctorReviewPage from "../pages/DoctorReviewPage";
 import AdminDashboard from "../pages/AdminDashboard";
+import DoctorVerification from "../pages/DoctorVerification";
 
 export default function AppRoutes() {
   return (
@@ -33,6 +34,7 @@ export default function AppRoutes() {
         <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
         <Route path="/doctor-review" element={<DoctorReviewPage />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/doctor-verification" element={<DoctorVerification />} />
       </Routes>
     </BrowserRouter>
   );
