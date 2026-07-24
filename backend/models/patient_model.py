@@ -3,17 +3,11 @@ from config import get_db_connection
 def create_patient_profile(
 
     user_id,
-
     age,
-
     gender,
-
     blood_group,
-
     date_of_birth,
-
     address,
-
     emergency_contact
 
 ):
