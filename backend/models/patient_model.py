@@ -99,7 +99,7 @@ def get_patient_profile(user_id):
 
     connection = get_db_connection()
 
-    cursor = connection.cursor(dictionary=True)
+    cursor = connection.cursor(dictionary=True, buffered=True)
 
     query = """
 

@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from routes.auth import auth_bp
 from routes.patient import patient_bp
+from routes.doctor import doctor_bp
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -12,6 +13,9 @@ app.register_blueprint(auth_bp)
 
 # Register the patient Blueprint with a URL prefix
 app.register_blueprint(patient_bp, url_prefix='/patient')
+
+# Register the doctor Blueprint
+app.register_blueprint(doctor_bp)
 
 @app.route("/")
 def home():
