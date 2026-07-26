@@ -189,3 +189,94 @@ def delete_consultation(consultation_id):
     connection.commit()
     cursor.close()
     connection.close()
+
+
+def get_patient_consultations(patient_id):
+    """
+    Retrieve all consultations for a specific patient.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True, buffered=True)
+    query = """
+    SELECT c.*, u.email as doctor_email, d.full_name as doctor_name, d.specialization, d.hospital
+    FROM consultations c
+    LEFT JOIN users u ON c.doctor_id = u.id
+    LEFT JOIN doctor_profiles d ON u.id = d.user_id
+    WHERE c.patient_id = %s
+    ORDER BY c.created_at DESC
+    """
+    cursor.execute(query, (patient_id,))
+    records = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return format_records(records)
+
+
+def get_doctor_consultations(doctor_id):
+    """
+    Retrieve all consultations assigned to a specific doctor.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True, buffered=True)
+    query = """
+    SELECT c.*, u.email as patient_email, u.full_name as patient_name, p.age, p.gender, p.blood_group
+    FROM consultations c
+    LEFT JOIN users u ON c.patient_id = u.id
+    LEFT JOIN patient_profiles p ON u.id = p.user_id
+    WHERE c.doctor_id = %s
+    ORDER BY c.created_at DESC
+    """
+    cursor.execute(query, (doctor_id,))
+    records = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return format_records(records)
+
+
+def accept_consultation(consultation_id, doctor_id=None):
+    """
+    Update consultation status to Accepted. Optionally assign/update doctor_id.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    if doctor_id:
+        query = "UPDATE consultations SET status = 'Accepted', doctor_id = %s WHERE id = %s"
+        cursor.execute(query, (doctor_id, consultation_id))
+    else:
+        query = "UPDATE consultations SET status = 'Accepted' WHERE id = %s"
+        cursor.execute(query, (consultation_id,))
+    affected = cursor.rowcount
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return affected > 0
+
+
+def reject_consultation(consultation_id):
+    """
+    Update consultation status to Rejected.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "UPDATE consultations SET status = 'Rejected' WHERE id = %s"
+    cursor.execute(query, (consultation_id,))
+    affected = cursor.rowcount
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return affected > 0
+
+
+def complete_consultation(consultation_id):
+    """
+    Update consultation status to Completed.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "UPDATE consultations SET status = 'Completed' WHERE id = %s"
+    cursor.execute(query, (consultation_id,))
+    affected = cursor.rowcount
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return affected > 0

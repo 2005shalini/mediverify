@@ -4,7 +4,12 @@ from models.consultation_model import (
     get_consultation as get_consultation_model,
     update_consultation as update_consultation_model,
     delete_consultation as delete_consultation_model,
-    check_user_exists
+    check_user_exists,
+    get_patient_consultations,
+    get_doctor_consultations,
+    accept_consultation,
+    reject_consultation,
+    complete_consultation
 )
 
 
@@ -185,5 +190,144 @@ def delete_consultation():
         delete_consultation_model(consultation_id)
         return jsonify({"message": "Consultation deleted successfully."}), 200
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def patient_history():
+    """
+    Retrieve consultation history for a specific patient.
+    """
+    try:
+        patient_id = request.args.get("patient_id") or request.args.get("user_id")
+        if not patient_id:
+            return jsonify({"message": "patient_id parameter is required."}), 400
+        try:
+            patient_id = int(patient_id)
+        except ValueError:
+            return jsonify({"message": "Invalid patient_id format. Must be a valid integer."}), 400
+
+        user = check_user_exists(patient_id)
+        if not user:
+            return jsonify({"message": "Patient (user) not found."}), 404
+
+        records = get_patient_consultations(patient_id)
+        return jsonify(records), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def doctor_history():
+    """
+    Retrieve consultation history for a specific doctor.
+    """
+    try:
+        doctor_id = request.args.get("doctor_id") or request.args.get("user_id")
+        if not doctor_id:
+            return jsonify({"message": "doctor_id parameter is required."}), 400
+        try:
+            doctor_id = int(doctor_id)
+        except ValueError:
+            return jsonify({"message": "Invalid doctor_id format. Must be a valid integer."}), 400
+
+        user = check_user_exists(doctor_id)
+        if not user:
+            return jsonify({"message": "Doctor (user) not found."}), 404
+
+        records = get_doctor_consultations(doctor_id)
+        return jsonify(records), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def accept():
+    """
+    Update consultation status to Accepted.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        doctor_id = request.args.get("doctor_id")
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True)
+            if payload:
+                id_val = id_val or payload.get("id") or payload.get("consultation_id")
+                doctor_id = doctor_id or payload.get("doctor_id")
+
+        if not id_val:
+            return jsonify({"message": "Consultation ID (id) is required."}), 400
+        try:
+            consultation_id = int(id_val)
+            if doctor_id is not None and doctor_id != "":
+                doctor_id = int(doctor_id)
+            else:
+                doctor_id = None
+        except ValueError:
+            return jsonify({"message": "Invalid numeric format for consultation ID or doctor_id."}), 400
+
+        existing = get_consultation_model(consultation_id=consultation_id)
+        if not existing:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        if doctor_id and not check_user_exists(doctor_id):
+            return jsonify({"message": "Doctor (user) not found."}), 404
+
+        accept_consultation(consultation_id, doctor_id=doctor_id)
+        return jsonify({"message": "Consultation accepted successfully.", "status": "Accepted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def reject():
+    """
+    Update consultation status to Rejected.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True)
+            if payload:
+                id_val = id_val or payload.get("id") or payload.get("consultation_id")
+
+        if not id_val:
+            return jsonify({"message": "Consultation ID (id) is required."}), 400
+        try:
+            consultation_id = int(id_val)
+        except ValueError:
+            return jsonify({"message": "Invalid consultation ID format."}), 400
+
+        existing = get_consultation_model(consultation_id=consultation_id)
+        if not existing:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        reject_consultation(consultation_id)
+        return jsonify({"message": "Consultation rejected successfully.", "status": "Rejected"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def complete():
+    """
+    Update consultation status to Completed.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True)
+            if payload:
+                id_val = id_val or payload.get("id") or payload.get("consultation_id")
+
+        if not id_val:
+            return jsonify({"message": "Consultation ID (id) is required."}), 400
+        try:
+            consultation_id = int(id_val)
+        except ValueError:
+            return jsonify({"message": "Invalid consultation ID format."}), 400
+
+        existing = get_consultation_model(consultation_id=consultation_id)
+        if not existing:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        complete_consultation(consultation_id)
+        return jsonify({"message": "Consultation completed successfully.", "status": "Completed"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
