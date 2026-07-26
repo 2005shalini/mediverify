@@ -19,9 +19,10 @@ consultation_bp = Blueprint("consultation", __name__)
 
 # Register Consultation CRUD endpoints exactly as specified
 consultation_bp.route("/consultation/create", methods=["POST"])(create_consultation)
-consultation_bp.route("/consultation", methods=["GET"])(get_consultation)
-consultation_bp.route("/consultation", methods=["PUT"])(update_consultation)
-consultation_bp.route("/consultation", methods=["DELETE"])(delete_consultation)
+consultation_bp.route("/consultation/all", methods=["GET"])(get_consultation)
+consultation_bp.route("/consultation/<consultation_id>", methods=["GET"])(get_consultation)
+consultation_bp.route("/consultation/update/<consultation_id>", methods=["PUT"])(update_consultation)
+consultation_bp.route("/consultation/delete/<consultation_id>", methods=["DELETE"])(delete_consultation)
 
 # Register Consultation Workflow endpoints
 consultation_bp.route("/consultation/patient", methods=["GET"])(patient_history)

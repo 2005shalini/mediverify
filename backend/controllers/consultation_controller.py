@@ -140,12 +140,12 @@ def create_consultation():
         return standard_error("Internal server error during consultation creation.", 500, e)
 
 
-def get_consultation():
+def get_consultation(consultation_id=None):
     """
     Retrieve consultation(s) by ID, patient_id, doctor_id, or status with 404 handling.
     """
     try:
-        id_val = request.args.get("id") or request.args.get("consultation_id")
+        id_val = consultation_id or request.args.get("id") or request.args.get("consultation_id")
         patient_id = request.args.get("patient_id")
         doctor_id = request.args.get("doctor_id")
         status = request.args.get("status")
@@ -181,7 +181,7 @@ def get_consultation():
         return standard_error("Internal server error while fetching consultations.", 500, e)
 
 
-def update_consultation():
+def update_consultation(consultation_id=None):
     """
     Update an existing consultation with status validation and duplicate checking.
     """
@@ -190,7 +190,7 @@ def update_consultation():
         if not data:
             return standard_error("Invalid or missing JSON payload.", 400)
 
-        id_val = data.get("id") or data.get("consultation_id") or request.args.get("id") or request.args.get("consultation_id")
+        id_val = consultation_id or (data.get("id") if data else None) or (data.get("consultation_id") if data else None) or request.args.get("id") or request.args.get("consultation_id")
         cid, err = parse_int(id_val, "consultation_id")
         if err:
             return standard_error(err, 400)
@@ -246,12 +246,12 @@ def update_consultation():
         return standard_error("Internal server error during consultation update.", 500, e)
 
 
-def delete_consultation():
+def delete_consultation(consultation_id=None):
     """
     Delete a consultation by ID with strict 404 handling.
     """
     try:
-        id_val = request.args.get("id") or request.args.get("consultation_id")
+        id_val = consultation_id or request.args.get("id") or request.args.get("consultation_id")
         if not id_val and request.is_json:
             payload = request.get_json(force=True, silent=True)
             if payload:
