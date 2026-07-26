@@ -5,6 +5,7 @@ from routes.patient import patient_bp
 from routes.doctor import doctor_bp
 from routes.consultation import consultation_bp
 from routes.report import report_bp
+from routes.ai import ai_bp
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -24,6 +25,9 @@ app.register_blueprint(consultation_bp)
 
 # Register the report Blueprint
 app.register_blueprint(report_bp)
+
+# Register the AI Analysis Blueprint
+app.register_blueprint(ai_bp)
 
 @app.route("/")
 def home():
