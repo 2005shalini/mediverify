@@ -9,7 +9,11 @@ from models.consultation_model import (
     get_doctor_consultations,
     accept_consultation,
     reject_consultation,
-    complete_consultation
+    complete_consultation,
+    update_doctor_notes,
+    update_prescription,
+    update_meeting_link,
+    get_consultation_details
 )
 
 
@@ -329,5 +333,126 @@ def complete():
 
         complete_consultation(consultation_id)
         return jsonify({"message": "Consultation completed successfully.", "status": "Completed"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def doctor_notes():
+    """
+    Update doctor notes for a consultation.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        notes = request.args.get("doctor_notes") or request.args.get("notes")
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True)
+            if payload:
+                id_val = id_val or payload.get("id") or payload.get("consultation_id")
+                if "doctor_notes" in payload:
+                    notes = payload.get("doctor_notes")
+                elif "notes" in payload:
+                    notes = payload.get("notes")
+
+        if not id_val or notes is None:
+            return jsonify({"message": "Consultation ID (id) and doctor_notes are required."}), 400
+        try:
+            consultation_id = int(id_val)
+        except ValueError:
+            return jsonify({"message": "Invalid consultation ID format."}), 400
+
+        existing = get_consultation_model(consultation_id=consultation_id)
+        if not existing:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        update_doctor_notes(consultation_id, notes)
+        return jsonify({"message": "Doctor notes updated successfully.", "doctor_notes": notes}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def prescription():
+    """
+    Update prescription for a consultation.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        prescription_text = request.args.get("prescription")
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True)
+            if payload:
+                id_val = id_val or payload.get("id") or payload.get("consultation_id")
+                if "prescription" in payload:
+                    prescription_text = payload.get("prescription")
+
+        if not id_val or prescription_text is None:
+            return jsonify({"message": "Consultation ID (id) and prescription are required."}), 400
+        try:
+            consultation_id = int(id_val)
+        except ValueError:
+            return jsonify({"message": "Invalid consultation ID format."}), 400
+
+        existing = get_consultation_model(consultation_id=consultation_id)
+        if not existing:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        update_prescription(consultation_id, prescription_text)
+        return jsonify({"message": "Prescription updated successfully.", "prescription": prescription_text}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def meeting_link():
+    """
+    Update meeting link for a consultation.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        link = request.args.get("meeting_link") or request.args.get("link") or request.args.get("url")
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True)
+            if payload:
+                id_val = id_val or payload.get("id") or payload.get("consultation_id")
+                if "meeting_link" in payload:
+                    link = payload.get("meeting_link")
+                elif "link" in payload:
+                    link = payload.get("link")
+                elif "url" in payload:
+                    link = payload.get("url")
+
+        if not id_val or link is None:
+            return jsonify({"message": "Consultation ID (id) and meeting_link are required."}), 400
+        try:
+            consultation_id = int(id_val)
+        except ValueError:
+            return jsonify({"message": "Invalid consultation ID format."}), 400
+
+        existing = get_consultation_model(consultation_id=consultation_id)
+        if not existing:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        update_meeting_link(consultation_id, link)
+        return jsonify({"message": "Meeting link updated successfully.", "meeting_link": link}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def details():
+    """
+    Retrieve complete enriched details of a consultation.
+    """
+    try:
+        id_val = request.args.get("id") or request.args.get("consultation_id")
+        if not id_val:
+            return jsonify({"message": "Consultation ID (id) parameter is required."}), 400
+        try:
+            consultation_id = int(id_val)
+        except ValueError:
+            return jsonify({"message": "Invalid consultation ID format."}), 400
+
+        record = get_consultation_details(consultation_id)
+        if not record:
+            return jsonify({"message": "Consultation not found."}), 404
+
+        return jsonify(record), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

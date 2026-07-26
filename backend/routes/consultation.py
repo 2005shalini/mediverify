@@ -8,7 +8,11 @@ from controllers.consultation_controller import (
     doctor_history,
     accept,
     reject,
-    complete
+    complete,
+    doctor_notes,
+    prescription,
+    meeting_link,
+    details
 )
 
 consultation_bp = Blueprint("consultation", __name__)
@@ -25,3 +29,9 @@ consultation_bp.route("/consultation/doctor", methods=["GET"])(doctor_history)
 consultation_bp.route("/consultation/accept", methods=["PUT"])(accept)
 consultation_bp.route("/consultation/reject", methods=["PUT"])(reject)
 consultation_bp.route("/consultation/complete", methods=["PUT"])(complete)
+
+# Register Doctor Consultation Feature endpoints
+consultation_bp.route("/consultation/notes", methods=["PUT"])(doctor_notes)
+consultation_bp.route("/consultation/prescription", methods=["PUT"])(prescription)
+consultation_bp.route("/consultation/meeting", methods=["PUT"])(meeting_link)
+consultation_bp.route("/consultation/details", methods=["GET"])(details)

@@ -280,3 +280,82 @@ def complete_consultation(consultation_id):
     cursor.close()
     connection.close()
     return affected > 0
+
+
+def update_doctor_notes(consultation_id, notes):
+    """
+    Update doctor notes for a specific consultation.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "UPDATE consultations SET doctor_notes = %s WHERE id = %s"
+    cursor.execute(query, (notes, consultation_id))
+    affected = cursor.rowcount
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return affected > 0
+
+
+def update_prescription(consultation_id, prescription_text):
+    """
+    Update prescription for a specific consultation.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "UPDATE consultations SET prescription = %s WHERE id = %s"
+    cursor.execute(query, (prescription_text, consultation_id))
+    affected = cursor.rowcount
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return affected > 0
+
+
+def update_meeting_link(consultation_id, meeting_link_url):
+    """
+    Update meeting link for a specific consultation.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = "UPDATE consultations SET meeting_link = %s WHERE id = %s"
+    cursor.execute(query, (meeting_link_url, consultation_id))
+    affected = cursor.rowcount
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return affected > 0
+
+
+def get_consultation_details(consultation_id):
+    """
+    Retrieve complete enriched details of a consultation including patient and doctor info.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True, buffered=True)
+    query = """
+    SELECT 
+        c.*,
+        u_p.email as patient_email,
+        u_p.full_name as patient_name,
+        p.age as patient_age,
+        p.gender as patient_gender,
+        p.blood_group as patient_blood_group,
+        p.emergency_contact as patient_contact,
+        u_d.email as doctor_email,
+        d.full_name as doctor_name,
+        d.specialization as doctor_specialization,
+        d.hospital as doctor_hospital,
+        d.consultation_fee
+    FROM consultations c
+    LEFT JOIN users u_p ON c.patient_id = u_p.id
+    LEFT JOIN patient_profiles p ON u_p.id = p.user_id
+    LEFT JOIN users u_d ON c.doctor_id = u_d.id
+    LEFT JOIN doctor_profiles d ON u_d.id = d.user_id
+    WHERE c.id = %s
+    """
+    cursor.execute(query, (consultation_id,))
+    record = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return format_record(record)
