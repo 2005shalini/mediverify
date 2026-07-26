@@ -30,14 +30,52 @@ def format_records(records):
 def check_user_exists(user_id):
     """
     Check if a user exists in the users table.
+    Ensures safe connection closure.
     """
     connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True, buffered=True)
-    cursor.execute("SELECT id, role, email FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    return format_record(user)
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        cursor.execute("SELECT id, role, email FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        return format_record(user)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def check_duplicate_consultation(patient_id, doctor_id, preferred_date, preferred_time, exclude_id=None):
+    """
+    Check if an active/pending consultation already exists for the same patient, doctor, date, and time.
+    Prevents double booking.
+    """
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT id FROM consultations 
+        WHERE patient_id = %s 
+          AND (doctor_id <=> %s)
+          AND preferred_date = %s 
+          AND preferred_time = %s 
+          AND status IN ('Pending', 'Accepted')
+        """
+        params = [patient_id, doctor_id, preferred_date, preferred_time]
+        if exclude_id is not None:
+            query += " AND id != %s"
+            params.append(exclude_id)
+
+        cursor.execute(query, tuple(params))
+        record = cursor.fetchone()
+        return record is not None
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def create_consultation(
@@ -54,46 +92,53 @@ def create_consultation(
     Populates both new schema columns and existing alias columns for backward compatibility.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = """
+        INSERT INTO consultations (
+            patient_id,
+            doctor_id,
+            title,
+            symptoms,
+            problem_description,
+            preferred_date,
+            preferred_time,
+            appointment_date,
+            appointment_time,
+            status
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
 
-    query = """
-    INSERT INTO consultations (
-        patient_id,
-        doctor_id,
-        title,
-        symptoms,
-        problem_description,
-        preferred_date,
-        preferred_time,
-        appointment_date,
-        appointment_time,
-        status
-    )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
+        title_val = (problem_description[:200] if problem_description else symptoms[:200]) if (problem_description or symptoms) else "Medical Consultation"
+        status_val = status or "Pending"
 
-    title_val = (problem_description[:200] if problem_description else symptoms[:200]) if (problem_description or symptoms) else "Medical Consultation"
-    status_val = status or "Pending"
+        values = (
+            patient_id,
+            doctor_id if doctor_id else None,
+            title_val,
+            symptoms,
+            problem_description,
+            preferred_date if preferred_date else None,
+            preferred_time if preferred_time else None,
+            preferred_date if preferred_date else None,
+            preferred_time if preferred_time else None,
+            status_val
+        )
 
-    values = (
-        patient_id,
-        doctor_id if doctor_id else None,
-        title_val,
-        symptoms,
-        problem_description,
-        preferred_date if preferred_date else None,
-        preferred_time if preferred_time else None,
-        preferred_date if preferred_date else None,
-        preferred_time if preferred_time else None,
-        status_val
-    )
-
-    cursor.execute(query, values)
-    new_id = cursor.lastrowid
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return new_id
+        cursor.execute(query, values)
+        new_id = cursor.lastrowid
+        connection.commit()
+        return new_id
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def get_consultation(consultation_id=None, patient_id=None, doctor_id=None, status=None):
@@ -101,38 +146,40 @@ def get_consultation(consultation_id=None, patient_id=None, doctor_id=None, stat
     Retrieve consultation(s) from the database.
     If consultation_id is provided, returns a single dictionary (or None).
     Otherwise, returns a list of matching consultation dictionaries.
-    Uses buffered=True to prevent MySQL unread result errors.
+    Uses buffered=True and try/finally to ensure database safety.
     """
     connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True, buffered=True)
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        if consultation_id is not None:
+            query = "SELECT * FROM consultations WHERE id = %s"
+            cursor.execute(query, (consultation_id,))
+            record = cursor.fetchone()
+            return format_record(record)
 
-    if consultation_id is not None:
-        query = "SELECT * FROM consultations WHERE id = %s"
-        cursor.execute(query, (consultation_id,))
-        record = cursor.fetchone()
-        cursor.close()
-        connection.close()
-        return format_record(record)
+        query = "SELECT * FROM consultations WHERE 1=1"
+        params = []
 
-    query = "SELECT * FROM consultations WHERE 1=1"
-    params = []
+        if patient_id is not None:
+            query += " AND patient_id = %s"
+            params.append(patient_id)
+        if doctor_id is not None:
+            query += " AND doctor_id = %s"
+            params.append(doctor_id)
+        if status is not None and status != "":
+            query += " AND status = %s"
+            params.append(status)
 
-    if patient_id is not None:
-        query += " AND patient_id = %s"
-        params.append(patient_id)
-    if doctor_id is not None:
-        query += " AND doctor_id = %s"
-        params.append(doctor_id)
-    if status is not None and status != "":
-        query += " AND status = %s"
-        params.append(status)
-
-    query += " ORDER BY created_at DESC"
-    cursor.execute(query, tuple(params))
-    records = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return format_records(records)
+        query += " ORDER BY created_at DESC"
+        cursor.execute(query, tuple(params))
+        records = cursor.fetchall()
+        return format_records(records)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def update_consultation(consultation_id, updates):
@@ -172,11 +219,19 @@ def update_consultation(consultation_id, updates):
     query = f"UPDATE consultations SET {', '.join(set_clauses)} WHERE id = %s"
 
     connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute(query, tuple(values))
-    connection.commit()
-    cursor.close()
-    connection.close()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute(query, tuple(values))
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def delete_consultation(consultation_id):
@@ -184,53 +239,71 @@ def delete_consultation(consultation_id):
     Delete a consultation from the database by ID.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM consultations WHERE id = %s", (consultation_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM consultations WHERE id = %s", (consultation_id,))
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def get_patient_consultations(patient_id):
     """
-    Retrieve all consultations for a specific patient.
+    Retrieve all consultations for a specific patient with doctor details.
     """
     connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True, buffered=True)
-    query = """
-    SELECT c.*, u.email as doctor_email, d.full_name as doctor_name, d.specialization, d.hospital
-    FROM consultations c
-    LEFT JOIN users u ON c.doctor_id = u.id
-    LEFT JOIN doctor_profiles d ON u.id = d.user_id
-    WHERE c.patient_id = %s
-    ORDER BY c.created_at DESC
-    """
-    cursor.execute(query, (patient_id,))
-    records = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return format_records(records)
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT c.*, u.email as doctor_email, d.full_name as doctor_name, d.specialization, d.hospital
+        FROM consultations c
+        LEFT JOIN users u ON c.doctor_id = u.id
+        LEFT JOIN doctor_profiles d ON u.id = d.user_id
+        WHERE c.patient_id = %s
+        ORDER BY c.created_at DESC
+        """
+        cursor.execute(query, (patient_id,))
+        records = cursor.fetchall()
+        return format_records(records)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def get_doctor_consultations(doctor_id):
     """
-    Retrieve all consultations assigned to a specific doctor.
+    Retrieve all consultations assigned to a specific doctor with patient details.
     """
     connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True, buffered=True)
-    query = """
-    SELECT c.*, u.email as patient_email, u.full_name as patient_name, p.age, p.gender, p.blood_group
-    FROM consultations c
-    LEFT JOIN users u ON c.patient_id = u.id
-    LEFT JOIN patient_profiles p ON u.id = p.user_id
-    WHERE c.doctor_id = %s
-    ORDER BY c.created_at DESC
-    """
-    cursor.execute(query, (doctor_id,))
-    records = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return format_records(records)
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT c.*, u.email as patient_email, u.full_name as patient_name, p.age, p.gender, p.blood_group
+        FROM consultations c
+        LEFT JOIN users u ON c.patient_id = u.id
+        LEFT JOIN patient_profiles p ON u.id = p.user_id
+        WHERE c.doctor_id = %s
+        ORDER BY c.created_at DESC
+        """
+        cursor.execute(query, (doctor_id,))
+        records = cursor.fetchall()
+        return format_records(records)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def accept_consultation(consultation_id, doctor_id=None):
@@ -238,18 +311,26 @@ def accept_consultation(consultation_id, doctor_id=None):
     Update consultation status to Accepted. Optionally assign/update doctor_id.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    if doctor_id:
-        query = "UPDATE consultations SET status = 'Accepted', doctor_id = %s WHERE id = %s"
-        cursor.execute(query, (doctor_id, consultation_id))
-    else:
-        query = "UPDATE consultations SET status = 'Accepted' WHERE id = %s"
-        cursor.execute(query, (consultation_id,))
-    affected = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return affected > 0
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        if doctor_id:
+            query = "UPDATE consultations SET status = 'Accepted', doctor_id = %s WHERE id = %s"
+            cursor.execute(query, (doctor_id, consultation_id))
+        else:
+            query = "UPDATE consultations SET status = 'Accepted' WHERE id = %s"
+            cursor.execute(query, (consultation_id,))
+        affected = cursor.rowcount
+        connection.commit()
+        return affected > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def reject_consultation(consultation_id):
@@ -257,14 +338,22 @@ def reject_consultation(consultation_id):
     Update consultation status to Rejected.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    query = "UPDATE consultations SET status = 'Rejected' WHERE id = %s"
-    cursor.execute(query, (consultation_id,))
-    affected = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return affected > 0
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = "UPDATE consultations SET status = 'Rejected' WHERE id = %s"
+        cursor.execute(query, (consultation_id,))
+        affected = cursor.rowcount
+        connection.commit()
+        return affected > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def complete_consultation(consultation_id):
@@ -272,14 +361,22 @@ def complete_consultation(consultation_id):
     Update consultation status to Completed.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    query = "UPDATE consultations SET status = 'Completed' WHERE id = %s"
-    cursor.execute(query, (consultation_id,))
-    affected = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return affected > 0
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = "UPDATE consultations SET status = 'Completed' WHERE id = %s"
+        cursor.execute(query, (consultation_id,))
+        affected = cursor.rowcount
+        connection.commit()
+        return affected > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def update_doctor_notes(consultation_id, notes):
@@ -287,14 +384,22 @@ def update_doctor_notes(consultation_id, notes):
     Update doctor notes for a specific consultation.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    query = "UPDATE consultations SET doctor_notes = %s WHERE id = %s"
-    cursor.execute(query, (notes, consultation_id))
-    affected = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return affected > 0
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = "UPDATE consultations SET doctor_notes = %s WHERE id = %s"
+        cursor.execute(query, (notes, consultation_id))
+        affected = cursor.rowcount
+        connection.commit()
+        return affected > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def update_prescription(consultation_id, prescription_text):
@@ -302,14 +407,22 @@ def update_prescription(consultation_id, prescription_text):
     Update prescription for a specific consultation.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    query = "UPDATE consultations SET prescription = %s WHERE id = %s"
-    cursor.execute(query, (prescription_text, consultation_id))
-    affected = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return affected > 0
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = "UPDATE consultations SET prescription = %s WHERE id = %s"
+        cursor.execute(query, (prescription_text, consultation_id))
+        affected = cursor.rowcount
+        connection.commit()
+        return affected > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def update_meeting_link(consultation_id, meeting_link_url):
@@ -317,14 +430,22 @@ def update_meeting_link(consultation_id, meeting_link_url):
     Update meeting link for a specific consultation.
     """
     connection = get_db_connection()
-    cursor = connection.cursor()
-    query = "UPDATE consultations SET meeting_link = %s WHERE id = %s"
-    cursor.execute(query, (meeting_link_url, consultation_id))
-    affected = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return affected > 0
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = "UPDATE consultations SET meeting_link = %s WHERE id = %s"
+        cursor.execute(query, (meeting_link_url, consultation_id))
+        affected = cursor.rowcount
+        connection.commit()
+        return affected > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def get_consultation_details(consultation_id):
@@ -332,30 +453,35 @@ def get_consultation_details(consultation_id):
     Retrieve complete enriched details of a consultation including patient and doctor info.
     """
     connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True, buffered=True)
-    query = """
-    SELECT 
-        c.*,
-        u_p.email as patient_email,
-        u_p.full_name as patient_name,
-        p.age as patient_age,
-        p.gender as patient_gender,
-        p.blood_group as patient_blood_group,
-        p.emergency_contact as patient_contact,
-        u_d.email as doctor_email,
-        d.full_name as doctor_name,
-        d.specialization as doctor_specialization,
-        d.hospital as doctor_hospital,
-        d.consultation_fee
-    FROM consultations c
-    LEFT JOIN users u_p ON c.patient_id = u_p.id
-    LEFT JOIN patient_profiles p ON u_p.id = p.user_id
-    LEFT JOIN users u_d ON c.doctor_id = u_d.id
-    LEFT JOIN doctor_profiles d ON u_d.id = d.user_id
-    WHERE c.id = %s
-    """
-    cursor.execute(query, (consultation_id,))
-    record = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    return format_record(record)
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT 
+            c.*,
+            u_p.email as patient_email,
+            u_p.full_name as patient_name,
+            p.age as patient_age,
+            p.gender as patient_gender,
+            p.blood_group as patient_blood_group,
+            p.emergency_contact as patient_contact,
+            u_d.email as doctor_email,
+            d.full_name as doctor_name,
+            d.specialization as doctor_specialization,
+            d.hospital as doctor_hospital,
+            d.consultation_fee
+        FROM consultations c
+        LEFT JOIN users u_p ON c.patient_id = u_p.id
+        LEFT JOIN patient_profiles p ON u_p.id = p.user_id
+        LEFT JOIN users u_d ON c.doctor_id = u_d.id
+        LEFT JOIN doctor_profiles d ON u_d.id = d.user_id
+        WHERE c.id = %s
+        """
+        cursor.execute(query, (consultation_id,))
+        record = cursor.fetchone()
+        return format_record(record)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
