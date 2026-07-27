@@ -15,7 +15,13 @@ from controllers.admin_controller import (
     doctor_details,
     verify,
     reject,
-    search_doc
+    search_doc,
+    dashboard,
+    revenue,
+    consultations,
+    reports,
+    recent_activities,
+    summary
 )
 
 admin_bp = Blueprint("admin", __name__)
@@ -71,3 +77,22 @@ admin_bp.route("/doctors/search", methods=["GET"], endpoint="fallback_doc_search
 admin_bp.route("/doctors/verify/<int:doctor_id>", methods=["PUT", "POST"], endpoint="fallback_doc_verify")(verify)
 admin_bp.route("/doctors/reject/<int:doctor_id>", methods=["PUT", "POST"], endpoint="fallback_doc_reject")(reject)
 admin_bp.route("/doctors/<int:doctor_id>", methods=["GET"], endpoint="fallback_doc_details")(doctor_details)
+
+
+# ==========================================================
+# PART 4: ADMIN DASHBOARD & ANALYTICS ROUTES
+# ==========================================================
+admin_bp.route("/admin/dashboard/revenue", methods=["GET"])(revenue)
+admin_bp.route("/admin/dashboard/consultations", methods=["GET"])(consultations)
+admin_bp.route("/admin/dashboard/reports", methods=["GET"])(reports)
+admin_bp.route("/admin/dashboard/recent-activities", methods=["GET"])(recent_activities)
+admin_bp.route("/admin/dashboard/system-summary", methods=["GET"])(summary)
+admin_bp.route("/admin/dashboard", methods=["GET"])(dashboard)
+
+# Support fallback routes without /admin prefix
+admin_bp.route("/dashboard/revenue", methods=["GET"], endpoint="fallback_admin_revenue")(revenue)
+admin_bp.route("/dashboard/consultations", methods=["GET"], endpoint="fallback_admin_consultations")(consultations)
+admin_bp.route("/dashboard/reports", methods=["GET"], endpoint="fallback_admin_reports")(reports)
+admin_bp.route("/dashboard/recent-activities", methods=["GET"], endpoint="fallback_admin_activities")(recent_activities)
+admin_bp.route("/dashboard/system-summary", methods=["GET"], endpoint="fallback_admin_summary")(summary)
+admin_bp.route("/dashboard", methods=["GET"], endpoint="fallback_admin_dashboard")(dashboard)

@@ -17,7 +17,13 @@ from models.admin_model import (
     get_doctor as get_doctor_model,
     verify_doctor as verify_doctor_model,
     reject_doctor as reject_doctor_model,
-    search_doctors as search_doctors_model
+    search_doctors as search_doctors_model,
+    dashboard as dashboard_model,
+    monthly_revenue as monthly_revenue_model,
+    consultation_statistics as consultation_statistics_model,
+    report_statistics as report_statistics_model,
+    recent_activities as recent_activities_model,
+    system_summary as system_summary_model
 )
 from middleware.admin_auth import admin_required
 
@@ -430,3 +436,67 @@ def search_doc():
         return jsonify(results), 200
     except Exception as e:
         return standard_error("Database error while searching doctors.", 500, e)
+
+
+# =====================================================================
+# PART 4: ADMIN DASHBOARD & ANALYTICS CONTROLLERS
+# =====================================================================
+
+@admin_required
+def dashboard():
+    """Handle GET /admin/dashboard. Return aggregate statistics."""
+    try:
+        stats = dashboard_model()
+        return jsonify(stats), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving dashboard statistics.", 500, e)
+
+
+@admin_required
+def revenue():
+    """Handle GET /admin/dashboard/revenue. Return monthly revenue breakdown."""
+    try:
+        rev_data = monthly_revenue_model()
+        return jsonify(rev_data), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving revenue analytics.", 500, e)
+
+
+@admin_required
+def consultations():
+    """Handle GET /admin/dashboard/consultations. Return consultation statistics."""
+    try:
+        cns_data = consultation_statistics_model()
+        return jsonify(cns_data), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving consultation statistics.", 500, e)
+
+
+@admin_required
+def reports():
+    """Handle GET /admin/dashboard/reports. Return report statistics."""
+    try:
+        rep_data = report_statistics_model()
+        return jsonify(rep_data), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving report statistics.", 500, e)
+
+
+@admin_required
+def recent_activities():
+    """Handle GET /admin/dashboard/recent-activities. Return latest activities."""
+    try:
+        act_data = recent_activities_model()
+        return jsonify(act_data), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving recent activities.", 500, e)
+
+
+@admin_required
+def summary():
+    """Handle GET /admin/dashboard/system-summary. Return real-time system summary."""
+    try:
+        sum_data = system_summary_model()
+        return jsonify(sum_data), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving system summary.", 500, e)

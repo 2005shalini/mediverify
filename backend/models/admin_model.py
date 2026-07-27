@@ -461,3 +461,274 @@ def search_doctors(name=None, specialization=None, verification_status=None):
             cursor.close()
         if connection:
             connection.close()
+
+
+# =====================================================================
+# PART 4: ADMIN DASHBOARD & ANALYTICS MODELS
+# =====================================================================
+
+def dashboard():
+    """
+    Retrieve comprehensive aggregate system statistics.
+    """
+    ensure_users_active_column()
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT
+            (SELECT COUNT(*) FROM users) AS total_users,
+            (SELECT COUNT(*) FROM users WHERE LOWER(role) = 'patient') AS total_patients,
+            (SELECT COUNT(*) FROM doctor_profiles) AS total_doctors,
+            (SELECT COUNT(*) FROM doctor_profiles WHERE verification_status IN ('Verified', 'Approved')) AS verified_doctors,
+            (SELECT COUNT(*) FROM doctor_profiles WHERE verification_status = 'Pending') AS pending_doctors,
+            (SELECT COUNT(*) FROM consultations) AS total_consultations,
+            (SELECT COUNT(*) FROM consultations WHERE LOWER(status) = 'completed') AS completed_consultations,
+            (SELECT COUNT(*) FROM medical_reports) AS total_reports,
+            (SELECT COUNT(*) FROM medical_reports WHERE LOWER(analysis_status) IN ('completed', 'analyzed', 'success')) AS reports_analyzed,
+            (SELECT COUNT(*) FROM payments) AS total_payments,
+            (SELECT COUNT(*) FROM payments WHERE LOWER(payment_status) IN ('success', 'paid', 'completed')) AS successful_payments,
+            (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE LOWER(payment_status) IN ('success', 'paid', 'completed')) AS total_revenue
+        """
+        cursor.execute(query)
+        res = cursor.fetchone() or {}
+        rev = float(res.get("total_revenue", 0))
+        rev_formatted = int(rev) if rev.is_integer() else rev
+
+        return {
+            "statistics": {
+                "total_users": int(res.get("total_users", 0)),
+                "total_patients": int(res.get("total_patients", 0)),
+                "total_doctors": int(res.get("total_doctors", 0)),
+                "verified_doctors": int(res.get("verified_doctors", 0)),
+                "pending_doctors": int(res.get("pending_doctors", 0)),
+                "total_consultations": int(res.get("total_consultations", 0)),
+                "completed_consultations": int(res.get("completed_consultations", 0)),
+                "total_reports": int(res.get("total_reports", 0)),
+                "reports_analyzed": int(res.get("reports_analyzed", 0)),
+                "total_payments": int(res.get("total_payments", 0)),
+                "successful_payments": int(res.get("successful_payments", 0)),
+                "total_revenue": rev_formatted
+            }
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def monthly_revenue():
+    """
+    Retrieve monthly revenue breakdown for successful payments.
+    """
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT 
+            DATE_FORMAT(COALESCE(payment_completed_at, created_at), '%M') AS month_name,
+            DATE_FORMAT(COALESCE(payment_completed_at, created_at), '%m') AS month_num,
+            SUM(amount) AS total_rev
+        FROM payments
+        WHERE LOWER(payment_status) IN ('success', 'paid', 'completed')
+        GROUP BY month_name, month_num
+        ORDER BY month_num ASC
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        result = []
+        for r in rows:
+            rev = float(r["total_rev"]) if r["total_rev"] is not None else 0.0
+            rev_formatted = int(rev) if rev.is_integer() else rev
+            result.append({
+                "month": r["month_name"] or "Unknown",
+                "revenue": rev_formatted
+            })
+        return result
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def consultation_statistics():
+    """
+    Retrieve counts of consultations grouped by status.
+    """
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT status, COUNT(*) AS count FROM consultations GROUP BY status")
+        rows = cursor.fetchall()
+        stats = {
+            "Pending": 0,
+            "Accepted": 0,
+            "Completed": 0,
+            "Cancelled": 0
+        }
+        for r in rows:
+            st = str(r["status"]).strip().title()
+            stats[st] = int(r["count"])
+        return stats
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def report_statistics():
+    """
+    Retrieve counts of uploaded, analyzed, and pending reports.
+    """
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                COUNT(*) AS total_uploaded,
+                SUM(CASE WHEN LOWER(analysis_status) IN ('completed', 'analyzed', 'success') THEN 1 ELSE 0 END) AS total_analyzed
+            FROM medical_reports
+        """)
+        res = cursor.fetchone() or {}
+        uploaded = int(res.get("total_uploaded", 0))
+        analyzed = int(res.get("total_analyzed", 0))
+        pending = max(0, uploaded - analyzed)
+        return {
+            "Uploaded Reports": uploaded,
+            "Analyzed Reports": analyzed,
+            "Pending Reports": pending
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def recent_activities():
+    """
+    Retrieve a consolidated list of the latest system activities across modules.
+    """
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        activities = []
+
+        # 1. New Users
+        cursor.execute("SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC LIMIT 5")
+        for r in cursor.fetchall():
+            activities.append({
+                "id": f"usr_{r['id']}",
+                "type": "New User Registered",
+                "description": f"User {r['full_name']} ({r['email']}) registered as {r['role']}.",
+                "timestamp": str(r.get("created_at") or ""),
+                "reference_id": r["id"]
+            })
+
+        # 2. Doctors Verified
+        cursor.execute("SELECT id, full_name, specialization, verified_at, created_at FROM doctor_profiles WHERE verification_status IN ('Verified', 'Approved') ORDER BY COALESCE(verified_at, created_at) DESC LIMIT 5")
+        for r in cursor.fetchall():
+            ts = str(r.get("verified_at") or r.get("created_at") or "")
+            activities.append({
+                "id": f"doc_{r['id']}",
+                "type": "Doctor Verified",
+                "description": f"Dr. {r['full_name']} ({r['specialization']}) was verified.",
+                "timestamp": ts,
+                "reference_id": r["id"]
+            })
+
+        # 3. Payment Success / Transactions
+        cursor.execute("SELECT id, amount, payment_status, created_at FROM payments ORDER BY created_at DESC LIMIT 5")
+        for r in cursor.fetchall():
+            st = str(r.get("payment_status", "")).strip().title()
+            act_type = "Payment Success" if st in ("Success", "Paid", "Completed") else f"Payment {st}"
+            amt = float(r["amount"]) if r.get("amount") is not None else 0
+            amt_fmt = int(amt) if amt.is_integer() else amt
+            activities.append({
+                "id": f"pay_{r['id']}",
+                "type": act_type,
+                "description": f"Payment #{r['id']} ({st}) of ₹{amt_fmt}.",
+                "timestamp": str(r.get("created_at") or ""),
+                "reference_id": r["id"]
+            })
+
+        # 4. Report Uploads
+        cursor.execute("SELECT id, report_title, patient_id, uploaded_at, created_at FROM medical_reports ORDER BY COALESCE(uploaded_at, created_at) DESC LIMIT 5")
+        for r in cursor.fetchall():
+            title = r.get("report_title") or f"Report #{r['id']}"
+            ts = str(r.get("uploaded_at") or r.get("created_at") or "")
+            activities.append({
+                "id": f"rep_{r['id']}",
+                "type": "Report Uploaded",
+                "description": f"Medical report '{title}' uploaded by patient ID {r['patient_id']}.",
+                "timestamp": ts,
+                "reference_id": r["id"]
+            })
+
+        # 5. Consultations Booked
+        cursor.execute("SELECT id, patient_id, doctor_id, status, created_at FROM consultations ORDER BY created_at DESC LIMIT 5")
+        for r in cursor.fetchall():
+            st = str(r.get("status", "")).strip().title()
+            activities.append({
+                "id": f"cns_{r['id']}",
+                "type": "Consultation Booked",
+                "description": f"Consultation #{r['id']} ({st}) booked between patient ID {r['patient_id']} and doctor ID {r['doctor_id']}.",
+                "timestamp": str(r.get("created_at") or ""),
+                "reference_id": r["id"]
+            })
+
+        # Sort by timestamp descending
+        activities.sort(key=lambda x: x["timestamp"], reverse=True)
+        return activities[:15]
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def system_summary():
+    """
+    Retrieve real-time system summary counts including today's activity.
+    """
+    ensure_users_active_column()
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT
+            (SELECT COUNT(*) FROM users WHERE is_active = 1 OR is_active IS NULL) AS active_users,
+            (SELECT COUNT(*) FROM users WHERE is_active = 0) AS inactive_users,
+            (SELECT COUNT(*) FROM doctor_profiles WHERE verification_status IN ('Verified', 'Approved')) AS verified_doctors,
+            (SELECT COUNT(*) FROM doctor_profiles WHERE verification_status = 'Pending') AS pending_verification,
+            (SELECT COUNT(*) FROM consultations WHERE DATE(created_at) = CURDATE() OR DATE(appointment_date) = CURDATE()) AS today_consultations,
+            (SELECT COUNT(*) FROM payments WHERE DATE(created_at) = CURDATE() OR DATE(payment_completed_at) = CURDATE()) AS today_payments,
+            (SELECT COUNT(*) FROM medical_reports WHERE DATE(uploaded_at) = CURDATE() OR DATE(created_at) = CURDATE()) AS today_reports
+        """
+        cursor.execute(query)
+        res = cursor.fetchone() or {}
+        return {
+            "active_users": int(res.get("active_users", 0)),
+            "inactive_users": int(res.get("inactive_users", 0)),
+            "verified_doctors": int(res.get("verified_doctors", 0)),
+            "pending_verification": int(res.get("pending_verification", 0)),
+            "today_consultations": int(res.get("today_consultations", 0)),
+            "today_payments": int(res.get("today_payments", 0)),
+            "today_reports": int(res.get("today_reports", 0))
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
