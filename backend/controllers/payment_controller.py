@@ -2,7 +2,11 @@ import os
 from flask import request, jsonify
 from models.payment_model import (
     create_payment_order as create_order_model,
-    save_payment as save_payment_model
+    save_payment as save_payment_model,
+    get_payment_by_order_id,
+    verify_payment as verify_payment_model,
+    update_payment_status,
+    mark_consultation_paid
 )
 from models.report_model import check_user_exists
 from models.consultation_model import get_consultation as get_consultation_model
@@ -123,3 +127,62 @@ def create_order():
 
     except Exception as e:
         return standard_error("Internal server error during payment order creation.", 500, e)
+
+
+def verify_payment():
+    """
+    Handle POST /payment/verify.
+    Verifies Razorpay signature, updates payments table status,
+    and updates related consultation payment_status to 'Paid'.
+    """
+    try:
+        payload = {}
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True) or {}
+        if not payload:
+            payload = request.form.to_dict() or request.args.to_dict()
+
+        order_id = payload.get("razorpay_order_id")
+        payment_id = payload.get("razorpay_payment_id")
+        signature = payload.get("razorpay_signature")
+
+        # Step 1: Validate request fields
+        if not order_id or not str(order_id).strip():
+            return standard_error("Invalid request: razorpay_order_id is required.", 400)
+        if not payment_id or not str(payment_id).strip():
+            return standard_error("Invalid request: razorpay_payment_id is required.", 400)
+        if not signature or not str(signature).strip():
+            return standard_error("Invalid request: razorpay_signature is required.", 400)
+
+        # Validate order and payment exist in DB
+        payment_record = get_payment_by_order_id(order_id)
+        if not payment_record:
+            return standard_error("Order not found: Payment order does not exist in database.", 404)
+
+        # Step 2: Verify Razorpay Signature using SDK / model
+        is_valid = verify_payment_model(order_id, payment_id, signature)
+
+        # Step 3 & Step 4: Handle verification result
+        if is_valid:
+            try:
+                update_payment_status(order_id, status="Success", razorpay_payment_id=payment_id)
+                mark_consultation_paid(consultation_id=payment_record["consultation_id"])
+            except Exception as db_err:
+                return standard_error("Database error while updating payment status.", 500, str(db_err))
+
+            return jsonify({
+                "status": "success",
+                "message": "Payment verified successfully."
+            }), 200
+        else:
+            try:
+                update_payment_status(order_id, status="Failed", razorpay_payment_id=payment_id)
+            except Exception:
+                pass
+            return jsonify({
+                "status": "error",
+                "message": "Payment verification failed."
+            }), 400
+
+    except Exception as e:
+        return standard_error("Internal server error during payment verification.", 500, e)
