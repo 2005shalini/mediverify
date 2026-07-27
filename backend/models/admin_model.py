@@ -109,3 +109,156 @@ def get_admin(admin_id):
             cursor.close()
         if connection:
             connection.close()
+
+
+def ensure_users_active_column():
+    """Ensure users table has is_active column."""
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE AFTER is_verified")
+        connection.commit()
+    except Exception:
+        pass
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def format_user_record(record):
+    if not record:
+        return None
+    return {
+        "id": record["id"],
+        "name": record["full_name"],
+        "email": record["email"],
+        "role": record["role"],
+        "phone": record.get("phone") or "",
+        "profile_image": record.get("profile_image") or "",
+        "is_verified": bool(record.get("is_verified", False)),
+        "is_active": bool(record.get("is_active", True)),
+        "created_at": str(record.get("created_at", "")),
+        "updated_at": str(record.get("updated_at", ""))
+    }
+
+
+def get_all_users():
+    """Retrieve all registered users (excluding password)."""
+    ensure_users_active_column()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT id, full_name, email, role, phone, profile_image, is_verified, is_active, created_at, updated_at FROM users ORDER BY id DESC")
+        records = cursor.fetchall()
+        return [format_user_record(r) for r in records]
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def get_user(user_id):
+    """Retrieve complete details of a single user by ID."""
+    ensure_users_active_column()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT id, full_name, email, role, phone, profile_image, is_verified, is_active, created_at, updated_at FROM users WHERE id = %s", (user_id,))
+        record = cursor.fetchone()
+        return format_user_record(record)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def search_users(name=None, email=None):
+    """Search registered users by name and/or email."""
+    ensure_users_active_column()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = "SELECT id, full_name, email, role, phone, profile_image, is_verified, is_active, created_at, updated_at FROM users WHERE 1=1"
+        params = []
+        if name and str(name).strip():
+            query += " AND full_name LIKE %s"
+            params.append(f"%{str(name).strip()}%")
+        if email and str(email).strip():
+            query += " AND email LIKE %s"
+            params.append(f"%{str(email).strip()}%")
+        query += " ORDER BY id DESC"
+        cursor.execute(query, tuple(params))
+        records = cursor.fetchall()
+        return [format_user_record(r) for r in records]
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def block_user(user_id):
+    """Block a user by setting is_active to False."""
+    ensure_users_active_column()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute("UPDATE users SET is_active = False WHERE id = %s", (user_id,))
+        connection.commit()
+        return cursor.rowcount > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def unblock_user(user_id):
+    """Unblock a user by setting is_active to True."""
+    ensure_users_active_column()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute("UPDATE users SET is_active = True WHERE id = %s", (user_id,))
+        connection.commit()
+        return cursor.rowcount > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def delete_user(user_id):
+    """Delete a user from the database."""
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        connection.commit()
+        return cursor.rowcount > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
