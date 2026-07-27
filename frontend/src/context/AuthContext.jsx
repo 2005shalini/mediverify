@@ -5,12 +5,27 @@ export const AuthContext = createContext(null);
 
 /**
  * Authentication Provider to manage global auth state across the React app.
- * Prepares structure for Phase 8 Part 2 integration without making API calls yet.
+ * Handles session restoration, JWT expiration verification, and auto logout.
  */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setTokenState] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Logout function: clears local storage, resets state, and redirects to login page
+  const logout = useCallback(() => {
+    removeToken();
+    setTokenState(null);
+    setUser(null);
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/login" &&
+      window.location.pathname !== "/" &&
+      window.location.pathname !== "/signup"
+    ) {
+      window.location.replace("/login");
+    }
+  }, []);
 
   // Initialize authentication state from localStorage on component mount
   useEffect(() => {
@@ -18,6 +33,34 @@ export const AuthProvider = ({ children }) => {
     const storedUser = getUser();
 
     if (storedToken) {
+      // Check JWT token expiration
+      try {
+        const base64Url = storedToken.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        const decoded = JSON.parse(jsonPayload);
+        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+          // Invalid or expired token -> Logout automatically
+          removeToken();
+          setTokenState(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        // Corrupted token -> Logout automatically
+        removeToken();
+        setTokenState(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       setTokenState(storedToken);
       if (storedUser) {
         setUser(storedUser);
@@ -26,15 +69,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Logout function: clears local storage and resets state
-  const logout = useCallback(() => {
-    removeToken();
-    setTokenState(null);
-    setUser(null);
-  }, []);
-
   // Login function: persists token and user data in state and storage
-  // Note: Actual backend API authentication is handled in Phase 8 Part 2
   const login = useCallback((userData, jwtToken) => {
     if (jwtToken) {
       saveToken(jwtToken);

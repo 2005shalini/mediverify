@@ -15,6 +15,7 @@ import DoctorDashboard from "../pages/DoctorDashboard";
 import DoctorReviewPage from "../pages/DoctorReviewPage";
 import AdminDashboard from "../pages/AdminDashboard";
 import DoctorVerification from "../pages/DoctorVerification";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
   return (
@@ -23,18 +24,22 @@ export default function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/create-consultation" element={<CreateConsultation />} />
-        <Route path="/ai-analysis" element={<AIAnalysis />} />
-        <Route path="/doctor-selection" element={<DoctorSelection />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/consultation-details" element={<ConsultationDetails />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
-        <Route path="/doctor-review" element={<DoctorReviewPage />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/doctor-verification" element={<DoctorVerification />} />
+
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create-consultation" element={<CreateConsultation />} />
+          <Route path="/ai-analysis" element={<AIAnalysis />} />
+          <Route path="/doctor-selection" element={<DoctorSelection />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/consultation-details" element={<ConsultationDetails />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/doctor-review" element={<DoctorReviewPage />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/doctor-verification" element={<DoctorVerification />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

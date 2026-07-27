@@ -1,8 +1,18 @@
-import { Link, useLocation } from "react-router-dom";
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, Activity, Settings, Stethoscope, FileText, LogOut } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function AdminSidebar() {
   const location = useLocation();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    logout();
+    navigate("/login");
+  };
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: "Overview", path: "/admin-dashboard" },
@@ -55,7 +65,11 @@ export default function AdminSidebar() {
           <Settings size={20} className="text-gray-400" />
           Settings
         </Link>
-        <button className="w-full mt-2 flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 transition-all duration-200">
+        <button
+          onClick={handleLogout}
+          type="button"
+          className="w-full mt-2 flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer text-left"
+        >
           <LogOut size={20} />
           Logout
         </button>
