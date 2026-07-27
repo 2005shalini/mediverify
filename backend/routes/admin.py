@@ -8,7 +8,14 @@ from controllers.admin_controller import (
     search,
     block,
     unblock,
-    delete
+    delete,
+    pending_doctors,
+    verified_doctors,
+    rejected_doctors,
+    doctor_details,
+    verify,
+    reject,
+    search_doc
 )
 
 admin_bp = Blueprint("admin", __name__)
@@ -43,3 +50,24 @@ admin_bp.route("/users/unblock/<int:user_id>", methods=["PUT", "POST"], endpoint
 admin_bp.route("/users/<int:user_id>", methods=["GET"], endpoint="fallback_users_get")(user)
 admin_bp.route("/users/<int:user_id>", methods=["DELETE"], endpoint="fallback_users_delete")(delete)
 admin_bp.route("/users", methods=["GET"], endpoint="fallback_users_all")(users)
+
+
+# ==========================================================
+# PART 3: DOCTOR VERIFICATION ROUTES (Defined before /<int:doctor_id> to avoid routing ambiguity)
+# ==========================================================
+admin_bp.route("/admin/doctors/pending", methods=["GET"])(pending_doctors)
+admin_bp.route("/admin/doctors/verified", methods=["GET"])(verified_doctors)
+admin_bp.route("/admin/doctors/rejected", methods=["GET"])(rejected_doctors)
+admin_bp.route("/admin/doctors/search", methods=["GET"])(search_doc)
+admin_bp.route("/admin/doctors/verify/<int:doctor_id>", methods=["PUT", "POST"])(verify)
+admin_bp.route("/admin/doctors/reject/<int:doctor_id>", methods=["PUT", "POST"])(reject)
+admin_bp.route("/admin/doctors/<int:doctor_id>", methods=["GET"])(doctor_details)
+
+# Support fallback routes without /admin prefix
+admin_bp.route("/doctors/pending", methods=["GET"], endpoint="fallback_doc_pending")(pending_doctors)
+admin_bp.route("/doctors/verified", methods=["GET"], endpoint="fallback_doc_verified")(verified_doctors)
+admin_bp.route("/doctors/rejected", methods=["GET"], endpoint="fallback_doc_rejected")(rejected_doctors)
+admin_bp.route("/doctors/search", methods=["GET"], endpoint="fallback_doc_search")(search_doc)
+admin_bp.route("/doctors/verify/<int:doctor_id>", methods=["PUT", "POST"], endpoint="fallback_doc_verify")(verify)
+admin_bp.route("/doctors/reject/<int:doctor_id>", methods=["PUT", "POST"], endpoint="fallback_doc_reject")(reject)
+admin_bp.route("/doctors/<int:doctor_id>", methods=["GET"], endpoint="fallback_doc_details")(doctor_details)

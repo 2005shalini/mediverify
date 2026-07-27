@@ -3,6 +3,10 @@ import bcrypt
 from config import get_db_connection
 
 
+# =====================================================================
+# PART 1: ADMIN AUTHENTICATION MODELS
+# =====================================================================
+
 def ensure_admins_table():
     """
     Create admins table only if it does not already exist.
@@ -110,6 +114,10 @@ def get_admin(admin_id):
         if connection:
             connection.close()
 
+
+# =====================================================================
+# PART 2: USER MANAGEMENT MODELS
+# =====================================================================
 
 def ensure_users_active_column():
     """Ensure users table has is_active column."""
@@ -257,6 +265,197 @@ def delete_user(user_id):
     except Exception:
         connection.rollback()
         raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+# =====================================================================
+# PART 3: DOCTOR VERIFICATION MODELS
+# =====================================================================
+
+def ensure_doctor_verification_columns():
+    """Ensure doctor_profiles table has verification tracking columns and flexible VARCHAR status."""
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        try:
+            cursor.execute("ALTER TABLE doctor_profiles MODIFY COLUMN verification_status VARCHAR(20) DEFAULT 'Pending'")
+        except Exception:
+            pass
+        for col, defn in [
+            ('verified_at', 'DATETIME NULL AFTER verification_status'),
+            ('verified_by', 'INT NULL AFTER verified_at'),
+            ('rejection_reason', 'TEXT NULL AFTER verified_by')
+        ]:
+            try:
+                cursor.execute(f'ALTER TABLE doctor_profiles ADD COLUMN {col} {defn}')
+            except Exception:
+                pass
+        connection.commit()
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def format_doctor_record(record):
+    if not record:
+        return None
+    for k, v in record.items():
+        if hasattr(v, 'isoformat'):
+            record[k] = str(v)
+        elif hasattr(v, 'seconds'):
+            record[k] = str(v)
+        elif type(v).__name__ == 'Decimal':
+            record[k] = float(v)
+    return record
+
+
+def get_pending_doctors():
+    """Retrieve all doctors with verification_status = 'Pending'."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM doctor_profiles WHERE verification_status = 'Pending' ORDER BY id DESC")
+        records = cursor.fetchall()
+        return [format_doctor_record(r) for r in records]
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def get_verified_doctors():
+    """Retrieve all doctors with verification_status = 'Verified' (or 'Approved')."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM doctor_profiles WHERE verification_status IN ('Verified', 'Approved') ORDER BY id DESC")
+        records = cursor.fetchall()
+        return [format_doctor_record(r) for r in records]
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def get_rejected_doctors():
+    """Retrieve all doctors with verification_status = 'Rejected'."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM doctor_profiles WHERE verification_status = 'Rejected' ORDER BY id DESC")
+        records = cursor.fetchall()
+        return [format_doctor_record(r) for r in records]
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def get_doctor(doctor_id):
+    """Retrieve complete doctor profile by ID or user_id."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM doctor_profiles WHERE id = %s OR user_id = %s", (doctor_id, doctor_id))
+        record = cursor.fetchone()
+        return format_doctor_record(record)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def verify_doctor(doctor_id, admin_id=None):
+    """Approve a doctor by setting verification_status to 'Verified'."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = """
+        UPDATE doctor_profiles 
+        SET verification_status = 'Verified', verified_at = CURRENT_TIMESTAMP, verified_by = %s, rejection_reason = NULL
+        WHERE id = %s OR user_id = %s
+        """
+        cursor.execute(query, (admin_id, doctor_id, doctor_id))
+        connection.commit()
+        return cursor.rowcount > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def reject_doctor(doctor_id, admin_id=None, reason=None):
+    """Reject a doctor by setting verification_status to 'Rejected' and storing reason."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        query = """
+        UPDATE doctor_profiles 
+        SET verification_status = 'Rejected', verified_at = CURRENT_TIMESTAMP, verified_by = %s, rejection_reason = %s
+        WHERE id = %s OR user_id = %s
+        """
+        cursor.execute(query, (admin_id, reason, doctor_id, doctor_id))
+        connection.commit()
+        return cursor.rowcount > 0
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def search_doctors(name=None, specialization=None, verification_status=None):
+    """Search doctor profiles by name, specialization, and/or status."""
+    ensure_doctor_verification_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = "SELECT * FROM doctor_profiles WHERE 1=1"
+        params = []
+        if name and str(name).strip():
+            query += " AND full_name LIKE %s"
+            params.append(f"%{str(name).strip()}%")
+        if specialization and str(specialization).strip():
+            query += " AND specialization LIKE %s"
+            params.append(f"%{str(specialization).strip()}%")
+        if verification_status and str(verification_status).strip():
+            query += " AND verification_status LIKE %s"
+            params.append(f"%{str(verification_status).strip()}%")
+        query += " ORDER BY id DESC"
+        cursor.execute(query, tuple(params))
+        records = cursor.fetchall()
+        return [format_doctor_record(r) for r in records]
     finally:
         if cursor:
             cursor.close()
