@@ -6,7 +6,10 @@ from models.payment_model import (
     get_payment_by_order_id,
     verify_payment as verify_payment_model,
     update_payment_status,
-    mark_consultation_paid
+    mark_consultation_paid,
+    get_payment_history,
+    get_payment as get_payment_model,
+    generate_invoice as generate_invoice_model
 )
 from models.report_model import check_user_exists
 from models.consultation_model import get_consultation as get_consultation_model
@@ -186,3 +189,73 @@ def verify_payment():
 
     except Exception as e:
         return standard_error("Internal server error during payment verification.", 500, e)
+
+
+def payment_history(patient_id=None):
+    """
+    Handle GET /payment/history/<patient_id>.
+    Returns list of all payments for the patient.
+    """
+    try:
+        pid_val = patient_id or request.args.get("patient_id") or request.args.get("user_id")
+        pid, err = parse_int(pid_val, "patient")
+        if err:
+            return standard_error(err, 400)
+
+        if not check_user_exists(pid):
+            return standard_error("Invalid patient: Patient (user) not found in database.", 404)
+
+        try:
+            history = get_payment_history(pid)
+            return jsonify(history), 200
+        except Exception as db_err:
+            return standard_error("Database error while retrieving payment history.", 500, str(db_err))
+
+    except Exception as e:
+        return standard_error("Internal server error during payment history retrieval.", 500, e)
+
+
+def payment_details(payment_id=None):
+    """
+    Handle GET /payment/<payment_id>.
+    Returns complete details of a single payment.
+    """
+    try:
+        pay_id_val = payment_id or request.args.get("payment_id") or request.args.get("id")
+        pay_id, err = parse_int(pay_id_val, "payment")
+        if err:
+            return standard_error(err, 400)
+
+        try:
+            record = get_payment_model(pay_id)
+            if not record:
+                return standard_error("Invalid payment: Payment record not found in database.", 404)
+            return jsonify(record), 200
+        except Exception as db_err:
+            return standard_error("Database error while retrieving payment details.", 500, str(db_err))
+
+    except Exception as e:
+        return standard_error("Internal server error during payment details retrieval.", 500, e)
+
+
+def invoice(payment_id=None):
+    """
+    Handle GET /payment/invoice/<payment_id>.
+    Returns invoice JSON data for a specific payment.
+    """
+    try:
+        pay_id_val = payment_id or request.args.get("payment_id") or request.args.get("id")
+        pay_id, err = parse_int(pay_id_val, "payment")
+        if err:
+            return standard_error(err, 400)
+
+        try:
+            inv_data = generate_invoice_model(pay_id)
+            if not inv_data:
+                return standard_error("Invalid payment: Payment record not found in database.", 404)
+            return jsonify(inv_data), 200
+        except Exception as db_err:
+            return standard_error("Database error while generating invoice data.", 500, str(db_err))
+
+    except Exception as e:
+        return standard_error("Internal server error during invoice generation.", 500, e)

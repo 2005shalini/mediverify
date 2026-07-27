@@ -254,3 +254,124 @@ def mark_consultation_paid(consultation_id):
             cursor.close()
         if connection:
             connection.close()
+
+
+def get_payment_history(patient_id):
+    """
+    Retrieve all payments for a specific patient, ordered newest first.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT id AS payment_id, consultation_id, amount, currency, payment_status, payment_completed_at, created_at
+        FROM payments
+        WHERE patient_id = %s
+        ORDER BY created_at DESC, id DESC
+        """
+        cursor.execute(query, (patient_id,))
+        records = cursor.fetchall()
+        result = []
+        for r in records:
+            amt = float(r["amount"]) if r["amount"] is not None else 0.0
+            amt_formatted = int(amt) if amt.is_integer() else amt
+            dt_str = str(r.get("payment_completed_at") or r.get("created_at") or "")[:10]
+            result.append({
+                "payment_id": r["payment_id"],
+                "consultation_id": r["consultation_id"],
+                "amount": amt_formatted,
+                "currency": r.get("currency") or "INR",
+                "payment_status": r.get("payment_status") or "Pending",
+                "payment_date": dt_str
+            })
+        return result
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def get_payment(payment_id):
+    """
+    Retrieve complete payment details by payment ID.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        cursor.execute("SELECT * FROM payments WHERE id = %s", (payment_id,))
+        record = cursor.fetchone()
+        if not record:
+            return None
+        formatted = format_record(record)
+        formatted["payment_id"] = formatted.pop("id", payment_id)
+        if "amount" in formatted and formatted["amount"] is not None:
+            amt = float(formatted["amount"])
+            formatted["amount"] = int(amt) if amt.is_integer() else amt
+        return formatted
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def generate_invoice(payment_id):
+    """
+    Generate invoice JSON data for a specific payment.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT 
+            p.*,
+            u_pat.full_name AS patient_name,
+            COALESCE(d_doc.full_name, u_doc.full_name, 'Doctor') AS doc_full_name
+        FROM payments p
+        LEFT JOIN users u_pat ON p.patient_id = u_pat.id
+        LEFT JOIN consultations c ON p.consultation_id = c.id
+        LEFT JOIN doctor_profiles d_doc ON c.doctor_id = d_doc.user_id
+        LEFT JOIN users u_doc ON c.doctor_id = u_doc.id
+        WHERE p.id = %s
+        """
+        cursor.execute(query, (payment_id,))
+        record = cursor.fetchone()
+        if not record:
+            return None
+
+        pid_int = int(record["id"])
+        inv_num = f"INV-{10000 + pid_int}" if pid_int < 10000 else f"INV-{pid_int}"
+
+        pat_name = record.get("patient_name") or f"Patient #{record['patient_id']}"
+        doc_name = record.get("doc_full_name") or "Doctor"
+        if not doc_name.lower().startswith("dr.") and not doc_name.lower().startswith("dr "):
+            doc_name = f"Dr. {doc_name}"
+        elif doc_name.lower().startswith("dr "):
+            doc_name = "Dr. " + doc_name[3:]
+
+        amt = float(record["amount"]) if record["amount"] is not None else 0.0
+        amt_formatted = int(amt) if amt.is_integer() else amt
+        dt_str = str(record.get("payment_completed_at") or record.get("created_at") or "")[:10]
+
+        return {
+            "invoice_number": inv_num,
+            "patient_name": pat_name,
+            "doctor_name": doc_name,
+            "consultation_id": record["consultation_id"],
+            "amount": amt_formatted,
+            "currency": record.get("currency") or "INR",
+            "payment_status": record.get("payment_status") or "Pending",
+            "payment_date": dt_str
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
