@@ -23,6 +23,7 @@ def ensure_payments_table():
             razorpay_payment_id VARCHAR(100) NULL,
             payment_status VARCHAR(50) DEFAULT 'Pending',
             payment_completed_at TIMESTAMP NULL,
+            refund_date TIMESTAMP NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -39,7 +40,7 @@ def ensure_payments_table():
 
 
 def ensure_payment_columns():
-    """Ensure payments and consultations tables have required verification columns."""
+    """Ensure payments and consultations tables have required verification and refund columns."""
     ensure_payments_table()
     connection = get_db_connection()
     cursor = None
@@ -48,6 +49,7 @@ def ensure_payment_columns():
         for col_def in [
             ('payments', 'razorpay_payment_id', 'VARCHAR(100) NULL AFTER razorpay_order_id'),
             ('payments', 'payment_completed_at', 'TIMESTAMP NULL AFTER payment_status'),
+            ('payments', 'refund_date', 'TIMESTAMP NULL AFTER payment_completed_at'),
             ('consultations', 'payment_status', "VARCHAR(50) DEFAULT 'Unpaid' AFTER status")
         ]:
             try:
@@ -369,6 +371,182 @@ def generate_invoice(payment_id):
             "currency": record.get("currency") or "INR",
             "payment_status": record.get("payment_status") or "Pending",
             "payment_date": dt_str
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def refund_payment(payment_id):
+    """
+    Refund a successful payment by updating payment_status to 'Refunded' and setting refund_date.
+    Also updates related consultation payment_status to 'Refunded'.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT consultation_id FROM payments WHERE id = %s", (payment_id,))
+        row = cursor.fetchone()
+        cid = row["consultation_id"] if row else None
+
+        cursor.execute("""
+            UPDATE payments 
+            SET payment_status = 'Refunded', refund_date = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (payment_id,))
+
+        if cid:
+            cursor.execute("UPDATE consultations SET payment_status = 'Refunded' WHERE id = %s", (cid,))
+        connection.commit()
+        return True
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def payment_dashboard():
+    """
+    Retrieve aggregate statistics for the payment dashboard.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                COUNT(*) AS total_payments,
+                SUM(CASE WHEN payment_status = 'Success' THEN 1 ELSE 0 END) AS successful_payments,
+                SUM(CASE WHEN payment_status = 'Pending' THEN 1 ELSE 0 END) AS pending_payments,
+                SUM(CASE WHEN payment_status = 'Failed' THEN 1 ELSE 0 END) AS failed_payments,
+                SUM(CASE WHEN payment_status = 'Refunded' THEN 1 ELSE 0 END) AS refunded_payments,
+                COALESCE(SUM(CASE WHEN payment_status = 'Success' THEN amount ELSE 0 END), 0) AS total_revenue
+            FROM payments
+        """)
+        res = cursor.fetchone() or {}
+        rev = float(res.get("total_revenue", 0))
+        rev_formatted = int(rev) if rev.is_integer() else rev
+        return {
+            "total_payments": int(res.get("total_payments", 0)),
+            "successful_payments": int(res.get("successful_payments", 0)),
+            "pending_payments": int(res.get("pending_payments", 0)),
+            "failed_payments": int(res.get("failed_payments", 0)),
+            "refunded_payments": int(res.get("refunded_payments", 0)),
+            "total_revenue": rev_formatted
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def monthly_revenue():
+    """
+    Retrieve monthly revenue breakdown for successful payments.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT 
+            DATE_FORMAT(COALESCE(payment_completed_at, created_at), '%M') AS month_name,
+            DATE_FORMAT(COALESCE(payment_completed_at, created_at), '%m') AS month_num,
+            SUM(amount) AS total_rev
+        FROM payments
+        WHERE payment_status = 'Success'
+        GROUP BY month_name, month_num
+        ORDER BY month_num ASC
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        result = []
+        for r in rows:
+            rev = float(r["total_rev"]) if r["total_rev"] is not None else 0.0
+            rev_formatted = int(rev) if rev.is_integer() else rev
+            result.append({
+                "month": r["month_name"] or "Unknown",
+                "revenue": rev_formatted
+            })
+        return result
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def recent_payments():
+    """
+    Retrieve the latest 10 payment transactions.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True, buffered=True)
+        query = """
+        SELECT * FROM payments
+        ORDER BY created_at DESC, id DESC
+        LIMIT 10
+        """
+        cursor.execute(query)
+        records = cursor.fetchall()
+        result = []
+        for r in records:
+            formatted = format_record(r)
+            formatted["payment_id"] = formatted.pop("id", r["id"])
+            if "amount" in formatted and formatted["amount"] is not None:
+                amt = float(formatted["amount"])
+                formatted["amount"] = int(amt) if amt.is_integer() else amt
+            result.append(formatted)
+        return result
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+def payment_summary():
+    """
+    Retrieve temporal payment volume and transaction averages.
+    """
+    ensure_payment_columns()
+    connection = get_db_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        query = """
+        SELECT 
+            SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today_payments,
+            SUM(CASE WHEN created_at >= CURDATE() - INTERVAL 7 DAY THEN 1 ELSE 0 END) AS this_week,
+            SUM(CASE WHEN YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS this_month,
+            COALESCE(AVG(CASE WHEN payment_status = 'Success' THEN amount ELSE NULL END), 0) AS average_transaction,
+            COALESCE(MAX(CASE WHEN payment_status = 'Success' THEN amount ELSE NULL END), 0) AS highest_transaction
+        FROM payments
+        """
+        cursor.execute(query)
+        res = cursor.fetchone() or {}
+        avg_tx = float(res.get("average_transaction", 0))
+        max_tx = float(res.get("highest_transaction", 0))
+        return {
+            "today_payments": int(res.get("today_payments", 0)),
+            "this_week": int(res.get("this_week", 0)),
+            "this_month": int(res.get("this_month", 0)),
+            "average_transaction": int(avg_tx) if avg_tx.is_integer() else round(avg_tx, 2),
+            "highest_transaction": int(max_tx) if max_tx.is_integer() else round(max_tx, 2)
         }
     finally:
         if cursor:

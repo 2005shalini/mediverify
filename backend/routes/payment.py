@@ -4,7 +4,12 @@ from controllers.payment_controller import (
     verify_payment,
     payment_history,
     payment_details,
-    invoice
+    invoice,
+    refund,
+    dashboard,
+    monthly_revenue,
+    recent,
+    summary
 )
 
 payment_bp = Blueprint("payment", __name__)
@@ -18,7 +23,16 @@ payment_bp.route("/payment/order", methods=["POST"])(create_order)
 payment_bp.route("/payment/verify", methods=["POST"])(verify_payment)
 payment_bp.route("/payment/verify_payment", methods=["POST"])(verify_payment)
 
-# Register Payment History endpoints (defined before /<int:payment_id> to avoid routing ambiguity)
+# Register Refund endpoint
+payment_bp.route("/payment/refund", methods=["POST"])(refund)
+
+# Register Payment Dashboard & Analytics endpoints (defined before /<int:payment_id> to avoid routing ambiguity)
+payment_bp.route("/payment/dashboard", methods=["GET"])(dashboard)
+payment_bp.route("/payment/revenue/monthly", methods=["GET"])(monthly_revenue)
+payment_bp.route("/payment/recent", methods=["GET"])(recent)
+payment_bp.route("/payment/summary", methods=["GET"])(summary)
+
+# Register Payment History endpoints
 payment_bp.route("/payment/history/<int:patient_id>", methods=["GET"])(payment_history)
 payment_bp.route("/payment/history", methods=["GET"])(payment_history)
 

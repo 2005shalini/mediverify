@@ -9,7 +9,12 @@ from models.payment_model import (
     mark_consultation_paid,
     get_payment_history,
     get_payment as get_payment_model,
-    generate_invoice as generate_invoice_model
+    generate_invoice as generate_invoice_model,
+    refund_payment as refund_payment_model,
+    payment_dashboard as payment_dashboard_model,
+    monthly_revenue as monthly_revenue_model,
+    recent_payments as recent_payments_model,
+    payment_summary as payment_summary_model
 )
 from models.report_model import check_user_exists
 from models.consultation_model import get_consultation as get_consultation_model
@@ -259,3 +264,92 @@ def invoice(payment_id=None):
 
     except Exception as e:
         return standard_error("Internal server error during invoice generation.", 500, e)
+
+
+def refund():
+    """
+    Handle POST /payment/refund.
+    Validates payment exists and is Successful, prevents duplicate refunds,
+    updates status to 'Refunded', and sets refund_date.
+    """
+    try:
+        payload = {}
+        if request.is_json:
+            payload = request.get_json(force=True, silent=True) or {}
+        if not payload:
+            payload = request.form.to_dict() or request.args.to_dict()
+
+        pay_id_val = payload.get("payment_id") or payload.get("id")
+        pay_id, err = parse_int(pay_id_val, "payment")
+        if err:
+            return standard_error(err, 400)
+
+        record = get_payment_model(pay_id)
+        if not record:
+            return standard_error("Invalid payment: Payment record not found in database.", 404)
+
+        current_status = str(record.get("payment_status", "")).strip().title()
+        if current_status == "Refunded":
+            return standard_error("Duplicate refund prevented: Payment has already been refunded.", 400)
+        if current_status != "Success":
+            return standard_error(f"Refund denied: Only successful payments can be refunded (current status: {current_status}).", 400)
+
+        try:
+            refund_payment_model(pay_id)
+            return jsonify({
+                "status": "success",
+                "message": "Payment refunded successfully."
+            }), 200
+        except Exception as db_err:
+            return standard_error("Database error while processing refund.", 500, str(db_err))
+
+    except Exception as e:
+        return standard_error("Internal server error during payment refund processing.", 500, e)
+
+
+def dashboard():
+    """
+    Handle GET /payment/dashboard.
+    Returns aggregate counts and total revenue.
+    """
+    try:
+        stats = payment_dashboard_model()
+        return jsonify(stats), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving payment dashboard statistics.", 500, e)
+
+
+def monthly_revenue():
+    """
+    Handle GET /payment/revenue/monthly.
+    Returns monthly revenue breakdown for successful payments.
+    """
+    try:
+        rev_data = monthly_revenue_model()
+        return jsonify(rev_data), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving monthly revenue data.", 500, e)
+
+
+def recent():
+    """
+    Handle GET /payment/recent.
+    Returns latest 10 payment transactions.
+    """
+    try:
+        recents = recent_payments_model()
+        return jsonify(recents), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving recent payments.", 500, e)
+
+
+def summary():
+    """
+    Handle GET /payment/summary.
+    Returns temporal payment counts and transaction size averages.
+    """
+    try:
+        summ = payment_summary_model()
+        return jsonify(summ), 200
+    except Exception as e:
+        return standard_error("Database error while retrieving payment summary data.", 500, e)
