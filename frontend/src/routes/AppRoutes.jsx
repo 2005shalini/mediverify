@@ -16,6 +16,7 @@ import DoctorDashboard from "../pages/DoctorDashboard";
 import DoctorProfile from "../pages/DoctorProfile";
 import DoctorReviewPage from "../pages/DoctorReviewPage";
 import AdminDashboard from "../pages/AdminDashboard";
+import AdminUsers from "../pages/AdminUsers";
 import DoctorVerification from "../pages/DoctorVerification";
 import MedicalRecords from "../pages/MedicalRecords";
 import UploadReport from "../pages/UploadReport";
@@ -47,7 +48,11 @@ export default function AppRoutes() {
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
           <Route path="/doctor-profile" element={<DoctorProfile />} />
           <Route path="/doctor-review" element={<DoctorReviewPage />} />
+          
+          {/* Admin Routes */}
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard/patients" element={<AdminUsers />} />
+          
           <Route path="/doctor-verification" element={<DoctorVerification />} />
           <Route path="/medical-records" element={<MedicalRecords />} />
           <Route path="/upload-report" element={<UploadReport />} />
