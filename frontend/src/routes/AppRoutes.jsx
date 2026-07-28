@@ -8,6 +8,7 @@ import CreateConsultation from "../pages/CreateConsultation";
 import AIAnalysis from "../pages/AIAnalysis";
 import DoctorSelection from "../pages/DoctorSelection";
 import PaymentPage from "../pages/PaymentPage";
+import PaymentHistory from "../pages/PaymentHistory";
 import ConsultationDetails from "../pages/ConsultationDetails";
 import ChatPage from "../pages/ChatPage";
 import ProfilePage from "../pages/ProfilePage";
@@ -39,6 +40,7 @@ export default function AppRoutes() {
           <Route path="/analysis-history" element={<AnalysisHistory />} />
           <Route path="/doctor-selection" element={<DoctorSelection />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment-history" element={<PaymentHistory />} />
           <Route path="/consultation-details" element={<ConsultationDetails />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/profile" element={<ProfilePage />} />

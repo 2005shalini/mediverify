@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, Stethoscope, Users, MessageSquare, Bell, User, Settings, LogOut, CheckCircle } from "lucide-react";
+import { LayoutDashboard, FileText, Stethoscope, Users, MessageSquare, Bell, User, Settings, LogOut, CheckCircle, CreditCard } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function Sidebar() {
@@ -68,6 +68,18 @@ export default function Sidebar() {
             <Users size={20} />
             Doctors
           </a>
+          
+          <Link
+            to="/payment-history"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/payment-history") || isActive("/payment")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
+          >
+            <CreditCard size={20} />
+            Payments
+          </Link>
 
           <a
             href="#"
