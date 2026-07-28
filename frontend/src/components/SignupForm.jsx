@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
+import { useAuth } from "../hooks/useAuth";
 
 function SignupForm() {
   const [name, setName] = useState("");
@@ -13,6 +14,7 @@ function SignupForm() {
   const [success, setSuccess] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validateForm = () => {
     if (!name || !name.trim()) {
@@ -57,18 +59,35 @@ function SignupForm() {
 
     setLoading(true);
     try {
-      await authService.signup({
+      const signUpRes = await authService.signup({
         name: name.trim(),
         email: email.trim(),
         password: password,
         role: role,
       });
 
-      setSuccess(true);
-      // Redirect to Login page after brief delay for smooth UX
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      let token = signUpRes?.token;
+      let userObj = signUpRes?.user;
+
+      if (!token) {
+        const loginRes = await authService.login({
+          email: email.trim(),
+          password: password,
+        });
+        token = loginRes.token;
+        userObj = loginRes.user;
+      }
+
+      login(userObj, token);
+      
+      const userRole = String(userObj?.role || role).toLowerCase();
+      if (userRole === "doctor") {
+        navigate("/doctor-dashboard");
+      } else if (userRole === "admin" || userRole === "super admin") {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       console.error("Signup error:", err);
       const status = err.response?.status;
@@ -103,7 +122,7 @@ function SignupForm() {
 
       {success && (
         <div className="mb-6 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg flex items-center gap-2">
-          <span className="font-semibold">Success!</span> Account created. Redirecting to login...
+          <span className="font-semibold">Success!</span> Account created. Redirecting to dashboard...
         </div>
       )}
 
