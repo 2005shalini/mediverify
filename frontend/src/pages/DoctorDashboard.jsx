@@ -3,6 +3,7 @@ import DoctorSidebar from "../components/dashboard/DoctorSidebar";
 import { Search, Bell } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import doctorService from "../services/doctorService";
+import { Link } from "react-router-dom";
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
@@ -64,7 +65,6 @@ export default function DoctorDashboard() {
             
             <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
               <Bell size={20} />
-              {/* <span className="absolute top-1.5 right-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span> */}
             </button>
 
             <div className="flex items-center gap-3 cursor-pointer">
@@ -133,12 +133,13 @@ export default function DoctorDashboard() {
                       <th className="px-6 py-4 font-medium">Problem</th>
                       <th className="px-6 py-4 font-medium">Date & Time</th>
                       <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {!dashboardData?.["Upcoming Consultations"] || dashboardData?.["Upcoming Consultations"].length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                           No upcoming consultations found.
                         </td>
                       </tr>
@@ -160,6 +161,11 @@ export default function DoctorDashboard() {
                             }`}>
                               {c.status}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Link to={`/consultation-details?id=${c.id}`} className="text-blue-600 font-semibold hover:underline text-sm">
+                              View
+                            </Link>
                           </td>
                         </tr>
                       ))

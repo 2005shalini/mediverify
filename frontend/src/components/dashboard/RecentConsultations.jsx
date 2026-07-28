@@ -1,4 +1,5 @@
 import { Stethoscope } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const getStatusColor = (status) => {
   const s = String(status || "").toLowerCase();
@@ -43,7 +44,11 @@ export default function RecentConsultations({ consultations = [] }) {
                   <Stethoscope size={24} className="text-blue-500"/>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Consultation-#{item.id || item.consultation_id || "NEW"}</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    <Link to={`/consultation-details?id=${item.id || item.consultation_id}`} className="hover:text-blue-600 transition-colors">
+                      Consultation-#{item.id || item.consultation_id || "NEW"}
+                    </Link>
+                  </h3>
                   <p className="text-sm text-gray-500">{item.doctor_specialization || item.specialty || "General"} • {item.doctor_name || item.doctor || "Doctor"}</p>
                   <p className="text-xs text-gray-400 mt-1">
                     {String(item.status).toLowerCase().includes("complet") 
@@ -52,10 +57,13 @@ export default function RecentConsultations({ consultations = [] }) {
                   </p>
                 </div>
               </div>
-              <div>
+              <div className="flex items-center gap-4">
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(item.status)}`}>
                   {item.status || "Pending"}
                 </span>
+                <Link to={`/consultation-details?id=${item.id || item.consultation_id}`} className="text-sm font-semibold text-blue-600 hover:underline">
+                  View
+                </Link>
               </div>
             </div>
           ))
