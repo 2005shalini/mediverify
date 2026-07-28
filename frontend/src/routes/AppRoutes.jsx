@@ -12,6 +12,7 @@ import ConsultationDetails from "../pages/ConsultationDetails";
 import ChatPage from "../pages/ChatPage";
 import ProfilePage from "../pages/ProfilePage";
 import DoctorDashboard from "../pages/DoctorDashboard";
+import DoctorProfile from "../pages/DoctorProfile";
 import DoctorReviewPage from "../pages/DoctorReviewPage";
 import AdminDashboard from "../pages/AdminDashboard";
 import DoctorVerification from "../pages/DoctorVerification";
@@ -36,6 +37,7 @@ export default function AppRoutes() {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/doctor-profile" element={<DoctorProfile />} />
           <Route path="/doctor-review" element={<DoctorReviewPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/doctor-verification" element={<DoctorVerification />} />
