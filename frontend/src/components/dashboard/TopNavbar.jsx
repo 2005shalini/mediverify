@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 export default function TopNavbar() {
   const { user } = useAuth();
-  const displayName = user?.name || user?.full_name || user?.email?.split("@")[0] || "Shalini";
+  const displayName = user?.full_name || user?.name || user?.username || user?.email || "Shalini";
   const avatarName = encodeURIComponent(displayName);
 
   return (
