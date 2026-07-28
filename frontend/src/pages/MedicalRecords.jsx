@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/dashboard/Sidebar";
-import TopNavbar from "../components/dashboard/TopNavbar";
 import { useAuth } from "../hooks/useAuth";
 import reportService from "../services/reportService";
-import { FileText, Download, Trash2, Plus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { FileText, Download, Trash2, Plus, Brain } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function MedicalRecords() {
   const { user } = useAuth();
@@ -58,6 +57,10 @@ export default function MedicalRecords() {
     }
   };
 
+  const handleAnalyze = (id) => {
+    navigate(`/ai-analysis?report_id=${id}`);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-GB", {
@@ -99,8 +102,14 @@ export default function MedicalRecords() {
         )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900">Your Reports</h2>
+            <button 
+              onClick={() => navigate("/analysis-history")} 
+              className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-2"
+            >
+              <Brain size={16} /> View Analysis History
+            </button>
           </div>
 
           {loading ? (
@@ -150,6 +159,13 @@ export default function MedicalRecords() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-3">
+                            <button 
+                              onClick={() => handleAnalyze(report.id)}
+                              className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition flex items-center gap-1"
+                              title="Analyze with AI"
+                            >
+                              <Brain size={16} /> Analyze
+                            </button>
                             <button 
                               onClick={() => handleDownload(report.id, report.file_name)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" 

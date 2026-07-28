@@ -18,6 +18,8 @@ import AdminDashboard from "../pages/AdminDashboard";
 import DoctorVerification from "../pages/DoctorVerification";
 import MedicalRecords from "../pages/MedicalRecords";
 import UploadReport from "../pages/UploadReport";
+import MedicalInsights from "../pages/MedicalInsights";
+import AnalysisHistory from "../pages/AnalysisHistory";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
@@ -33,6 +35,8 @@ export default function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-consultation" element={<CreateConsultation />} />
           <Route path="/ai-analysis" element={<AIAnalysis />} />
+          <Route path="/medical-insights" element={<MedicalInsights />} />
+          <Route path="/analysis-history" element={<AnalysisHistory />} />
           <Route path="/doctor-selection" element={<DoctorSelection />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/consultation-details" element={<ConsultationDetails />} />
