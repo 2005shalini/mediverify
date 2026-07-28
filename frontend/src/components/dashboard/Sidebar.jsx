@@ -1,17 +1,20 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, FileText, Stethoscope, Users, MessageSquare, Bell, User, Settings, LogOut, CheckCircle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function Sidebar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = (e) => {
     e.preventDefault();
     logout();
     navigate("/login");
   };
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 shadow-sm flex flex-col justify-between">
@@ -26,13 +29,17 @@ export default function Sidebar() {
         </div>
 
         <nav className="mt-6 px-4 space-y-1">
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white font-medium shadow-sm shadow-blue-200"
+          <Link
+            to="/dashboard"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/dashboard")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <LayoutDashboard size={20} />
             Dashboard
-          </a>
+          </Link>
 
           <a
             href="#"
@@ -42,13 +49,17 @@ export default function Sidebar() {
             My Consultations
           </a>
 
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-slate-50 hover:text-blue-600 transition-colors font-medium"
+          <Link
+            to="/medical-records"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/medical-records") || isActive("/upload-report")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <FileText size={20} />
             Reports
-          </a>
+          </Link>
 
           <a
             href="#"
@@ -74,13 +85,17 @@ export default function Sidebar() {
             Notifications
           </a>
 
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-slate-50 hover:text-blue-600 transition-colors font-medium"
+          <Link
+            to="/profile"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/profile")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <User size={20} />
             My Profile
-          </a>
+          </Link>
 
           <a
             href="#"

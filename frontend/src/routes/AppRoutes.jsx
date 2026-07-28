@@ -16,6 +16,8 @@ import DoctorProfile from "../pages/DoctorProfile";
 import DoctorReviewPage from "../pages/DoctorReviewPage";
 import AdminDashboard from "../pages/AdminDashboard";
 import DoctorVerification from "../pages/DoctorVerification";
+import MedicalRecords from "../pages/MedicalRecords";
+import UploadReport from "../pages/UploadReport";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
@@ -41,6 +43,8 @@ export default function AppRoutes() {
           <Route path="/doctor-review" element={<DoctorReviewPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/doctor-verification" element={<DoctorVerification />} />
+          <Route path="/medical-records" element={<MedicalRecords />} />
+          <Route path="/upload-report" element={<UploadReport />} />
         </Route>
       </Routes>
     </BrowserRouter>

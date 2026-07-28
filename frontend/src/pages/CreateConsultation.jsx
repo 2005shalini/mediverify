@@ -53,10 +53,10 @@ export default function CreateConsultation() {
         status: "Pending"
       };
 
-      const res = await consultationService.createConsultation(payload);
+      await consultationService.createConsultation(payload);
       
-      // Navigate to dashboard or details page on success
-      navigate(`/dashboard`);
+      // Navigate to upload-report on success as per step 2
+      navigate(`/upload-report`);
     } catch (err) {
       const msg = err.response?.data?.message || err.friendlyMessage || "Failed to book consultation.";
       setError(msg);
@@ -222,7 +222,7 @@ export default function CreateConsultation() {
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl shadow-md shadow-blue-200 transition-colors flex items-center gap-2 disabled:bg-blue-400"
               >
-                {loading ? "Submitting..." : "Submit Consultation"} <span>→</span>
+                {loading ? "Submitting..." : "Submit Consultation & Next"} <span>→</span>
               </button>
             </div>
           </div>
