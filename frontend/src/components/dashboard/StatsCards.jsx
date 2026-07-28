@@ -1,41 +1,41 @@
 import { Activity, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
-const stats = [
-  {
-    title: "Active Consultations",
-    value: "3",
-    icon: Activity,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    linkText: "View all"
-  },
-  {
-    title: "Pending Reviews",
-    value: "2",
-    icon: Clock,
-    color: "text-orange-500",
-    bg: "bg-orange-50",
-    linkText: "View all"
-  },
-  {
-    title: "Completed",
-    value: "5",
-    icon: CheckCircle2,
-    color: "text-green-500",
-    bg: "bg-green-50",
-    linkText: "View all"
-  },
-  {
-    title: "Emergency Alerts",
-    value: "0",
-    icon: AlertCircle,
-    color: "text-red-500",
-    bg: "bg-red-50",
-    linkText: "View all"
-  },
-];
+export default function StatsCards({ data }) {
+  const stats = [
+    {
+      title: "Total Consultations",
+      value: data?.total_consultations || "0",
+      icon: Activity,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      linkText: "View all"
+    },
+    {
+      title: "Total Reports",
+      value: data?.total_reports || "0",
+      icon: Clock,
+      color: "text-orange-500",
+      bg: "bg-orange-50",
+      linkText: "View all"
+    },
+    {
+      title: "Upcoming Consultations",
+      value: data?.upcoming_consultations || "0",
+      icon: CheckCircle2,
+      color: "text-green-500",
+      bg: "bg-green-50",
+      linkText: "View all"
+    },
+    {
+      title: "Emergency Alerts",
+      value: "0",
+      icon: AlertCircle,
+      color: "text-red-500",
+      bg: "bg-red-50",
+      linkText: "View all"
+    },
+  ];
 
-export default function StatsCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       {stats.map((item, index) => {
