@@ -32,6 +32,7 @@ export const login = async (credentials) => {
   let token = null;
   let isAdmin = false;
   let adminData = null;
+  let loginResData = null;
 
   // Try normal user login first, unless email explicitly looks like admin
   if (credentials.email && credentials.email.toLowerCase().includes("admin")) {
@@ -53,6 +54,7 @@ export const login = async (credentials) => {
     try {
       const res = await apiClient.post(LOGIN, credentials);
       token = res.data?.token;
+      loginResData = res.data;
     } catch (err) {
       // If normal login fails with 404 and we haven't tried admin login yet, try admin login as fallback
       if (err.response?.status === 404 && !isAdmin) {
@@ -92,10 +94,11 @@ export const login = async (credentials) => {
 
   const role = profileData?.role || decoded?.role || (isAdmin ? "Admin" : "Patient");
   const userId = profileData?.id || decoded?.user_id || decoded?.admin_id || decoded?.id || 1;
-  const name = profileData?.full_name || profileData?.name || adminData?.name || credentials.email.split("@")[0];
+  const name = profileData?.full_name || profileData?.name || adminData?.name || loginResData?.user?.full_name || credentials.email.split("@")[0];
 
   const userObj = {
     id: userId,
+    full_name: profileData?.full_name || profileData?.name || adminData?.name || loginResData?.user?.full_name || credentials.email.split("@")[0],
     name: name,
     email: profileData?.email || adminData?.email || credentials.email,
     role: role

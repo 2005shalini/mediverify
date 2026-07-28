@@ -99,5 +99,11 @@ def login():
 
     return jsonify({
         "message": "Login Successful",
-        "token": token
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "full_name": user["full_name"],
+            "email": user["email"],
+            "role": user["role"]
+        }
     }), 200
