@@ -25,6 +25,7 @@ import AnalysisHistory from "../pages/AnalysisHistory";
 import DoctorsDirectory from "../pages/DoctorsDirectory";
 import DoctorProfileView from "../pages/DoctorProfileView";
 import MyConsultations from "../pages/MyConsultations";
+import Notifications from "../pages/Notifications";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
@@ -41,6 +42,7 @@ export default function AppRoutes() {
           <Route path="/doctors" element={<DoctorsDirectory />} />
           <Route path="/doctors/:doctorId" element={<DoctorProfileView />} />
           <Route path="/my-consultations" element={<MyConsultations />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/create-consultation" element={<CreateConsultation />} />
           <Route path="/ai-analysis" element={<AIAnalysis />} />
           <Route path="/medical-insights" element={<MedicalInsights />} />

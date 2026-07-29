@@ -101,13 +101,17 @@ export default function Sidebar() {
             Messages
           </Link>
 
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-slate-50 hover:text-blue-600 transition-colors font-medium"
+          <Link
+            to="/notifications"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/notifications")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <Bell size={20} />
             Notifications
-          </a>
+          </Link>
 
           <Link
             to="/profile"
