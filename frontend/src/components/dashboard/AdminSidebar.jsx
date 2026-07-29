@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, Activity, Settings, Stethoscope, FileText, LogOut } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -39,9 +39,10 @@ export default function AdminSidebar() {
         {menuItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (
-            <Link
+            <NavLink
               key={index}
               to={item.path}
+              onClick={(e) => { if (isActive) e.preventDefault(); }}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-blue-50 text-blue-600 shadow-sm shadow-blue-100/50"
@@ -52,19 +53,24 @@ export default function AdminSidebar() {
                 {item.icon}
               </div>
               {item.label}
-            </Link>
+            </NavLink>
           );
         })}
       </div>
 
       <div className="p-4 border-t border-gray-100">
-        <Link
+        <NavLink
           to="/admin-dashboard/settings"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+          onClick={(e) => { if (location.pathname === "/admin-dashboard/settings") e.preventDefault(); }}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+            location.pathname === "/admin-dashboard/settings"
+              ? "bg-blue-50 text-blue-600 shadow-sm shadow-blue-100/50"
+              : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+          }`}
         >
-          <Settings size={20} className="text-gray-400" />
+          <Settings size={20} className={location.pathname === "/admin-dashboard/settings" ? "text-blue-600" : "text-gray-400"} />
           Settings
-        </Link>
+        </NavLink>
         <button
           onClick={handleLogout}
           type="button"

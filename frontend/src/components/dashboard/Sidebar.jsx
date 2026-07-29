@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, FileText, Stethoscope, Users, MessageSquare, Bell, User, Settings, LogOut, CheckCircle, CreditCard } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -29,8 +29,9 @@ export default function Sidebar() {
         </div>
 
         <nav className="mt-6 px-4 space-y-1">
-          <Link
+          <NavLink
             to="/dashboard"
+            onClick={(e) => { if (isActive("/dashboard")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/dashboard")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -39,10 +40,11 @@ export default function Sidebar() {
           >
             <LayoutDashboard size={20} />
             Dashboard
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/my-consultations"
+            onClick={(e) => { if (isActive("/my-consultations")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/my-consultations")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -51,10 +53,11 @@ export default function Sidebar() {
           >
             <Stethoscope size={20} />
             My Consultations
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/medical-records"
+            onClick={(e) => { if (isActive("/medical-records") || isActive("/upload-report")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/medical-records") || isActive("/upload-report")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -63,10 +66,11 @@ export default function Sidebar() {
           >
             <FileText size={20} />
             Reports
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/doctors"
+            onClick={(e) => { if (isActive("/doctors")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/doctors")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -75,10 +79,11 @@ export default function Sidebar() {
           >
             <Users size={20} />
             Doctors
-          </Link>
+          </NavLink>
           
-          <Link
+          <NavLink
             to="/payment-history"
+            onClick={(e) => { if (isActive("/payment-history") || isActive("/payment")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/payment-history") || isActive("/payment")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -87,10 +92,11 @@ export default function Sidebar() {
           >
             <CreditCard size={20} />
             Payments
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/messages"
+            onClick={(e) => { if (isActive("/messages")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/messages")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -99,10 +105,11 @@ export default function Sidebar() {
           >
             <MessageSquare size={20} />
             Messages
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/notifications"
+            onClick={(e) => { if (isActive("/notifications")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/notifications")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -111,10 +118,11 @@ export default function Sidebar() {
           >
             <Bell size={20} />
             Notifications
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/profile"
+            onClick={(e) => { if (isActive("/profile")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/profile")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -123,10 +131,11 @@ export default function Sidebar() {
           >
             <User size={20} />
             My Profile
-          </Link>
+          </NavLink>
 
-          <Link
+          <NavLink
             to="/settings"
+            onClick={(e) => { if (isActive("/settings")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/settings")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -135,7 +144,7 @@ export default function Sidebar() {
           >
             <Settings size={20} />
             Settings
-          </Link>
+          </NavLink>
         </nav>
       </div>
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, CheckSquare, Calendar, DollarSign, User, LogOut, CheckCircle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -29,8 +29,9 @@ export default function DoctorSidebar() {
         </div>
 
         <nav className="mt-6 px-4 space-y-1">
-          <Link
+          <NavLink
             to="/doctor-dashboard"
+            onClick={(e) => { if (isActive("/doctor-dashboard")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/doctor-dashboard")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -39,7 +40,7 @@ export default function DoctorSidebar() {
           >
             <LayoutDashboard size={20} />
             Dashboard
-          </Link>
+          </NavLink>
 
           <a
             href="#"
@@ -73,8 +74,9 @@ export default function DoctorSidebar() {
             Earnings
           </a>
 
-          <Link
+          <NavLink
             to="/doctor-profile"
+            onClick={(e) => { if (isActive("/doctor-profile")) e.preventDefault(); }}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               isActive("/doctor-profile")
                 ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
@@ -83,7 +85,7 @@ export default function DoctorSidebar() {
           >
             <User size={20} />
             Profile
-          </Link>
+          </NavLink>
         </nav>
       </div>
 

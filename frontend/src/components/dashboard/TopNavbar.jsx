@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Bell, User, Settings, FileText, LogOut, X, Check, Activity, Search as SearchIcon } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -24,6 +24,7 @@ const MOCK_NOTIFICATIONS = [
 export default function TopNavbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,7 +104,11 @@ export default function TopNavbar() {
     setIsSearchOpen(false);
     setIsNotifOpen(false);
     setIsProfileOpen(false);
-    navigate(path);
+    
+    const targetPath = path.split('?')[0]; // Handle query strings like /profile?tab=medical-history
+    if (location.pathname !== targetPath) {
+      navigate(path);
+    }
   };
 
   return (
