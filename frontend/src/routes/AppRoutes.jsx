@@ -22,6 +22,8 @@ import MedicalRecords from "../pages/MedicalRecords";
 import UploadReport from "../pages/UploadReport";
 import MedicalInsights from "../pages/MedicalInsights";
 import AnalysisHistory from "../pages/AnalysisHistory";
+import DoctorsDirectory from "../pages/DoctorsDirectory";
+import DoctorProfileView from "../pages/DoctorProfileView";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
@@ -35,6 +37,8 @@ export default function AppRoutes() {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/doctors" element={<DoctorsDirectory />} />
+          <Route path="/doctors/:doctorId" element={<DoctorProfileView />} />
           <Route path="/create-consultation" element={<CreateConsultation />} />
           <Route path="/ai-analysis" element={<AIAnalysis />} />
           <Route path="/medical-insights" element={<MedicalInsights />} />

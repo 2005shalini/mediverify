@@ -90,6 +90,17 @@ export const updateAvailability = async (userId, availability) => {
   return response.data;
 };
 
+/**
+ * Get all doctors with optional filtering
+ * @param {Object} filters
+ */
+export const getAllDoctors = async (filters = {}) => {
+  const queryParams = new URLSearchParams(filters).toString();
+  const url = queryParams ? `${DOCTORS_LIST}?${queryParams}` : DOCTORS_LIST;
+  const response = await apiClient.get(url);
+  return response.data;
+};
+
 export default {
   getProfile,
   updateProfile,
@@ -98,5 +109,6 @@ export default {
   getHistory,
   getDetails,
   getLicense,
-  updateAvailability
+  updateAvailability,
+  getAllDoctors
 };

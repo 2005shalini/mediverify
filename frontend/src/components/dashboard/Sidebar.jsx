@@ -61,13 +61,17 @@ export default function Sidebar() {
             Reports
           </Link>
 
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-slate-50 hover:text-blue-600 transition-colors font-medium"
+          <Link
+            to="/doctors"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/doctors")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <Users size={20} />
             Doctors
-          </a>
+          </Link>
           
           <Link
             to="/payment-history"

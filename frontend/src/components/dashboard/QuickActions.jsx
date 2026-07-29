@@ -24,7 +24,7 @@ export default function QuickActions() {
           <span className="font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Upload Reports</span>
         </button>
 
-        <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
+        <button onClick={() => navigate("/doctors")} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
           <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
             <Search size={20} />
           </div>
