@@ -49,7 +49,7 @@ export default function AppRoutes() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/payment-history" element={<PaymentHistory />} />
           <Route path="/consultation-details" element={<ConsultationDetails />} />
-          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/messages" element={<ChatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
           <Route path="/doctor-profile" element={<DoctorProfile />} />

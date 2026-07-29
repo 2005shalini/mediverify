@@ -89,13 +89,17 @@ export default function Sidebar() {
             Payments
           </Link>
 
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-slate-50 hover:text-blue-600 transition-colors font-medium"
+          <Link
+            to="/messages"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/messages")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <MessageSquare size={20} />
             Messages
-          </a>
+          </Link>
 
           <a
             href="#"
