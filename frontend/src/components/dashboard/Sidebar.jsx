@@ -41,13 +41,17 @@ export default function Sidebar() {
             Dashboard
           </Link>
 
-          <a
-            href="#"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-slate-50 hover:text-blue-600 transition-colors font-medium"
+          <Link
+            to="/my-consultations"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+              isActive("/my-consultations")
+                ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                : "text-gray-500 hover:bg-slate-50 hover:text-blue-600"
+            }`}
           >
             <Stethoscope size={20} />
             My Consultations
-          </a>
+          </Link>
 
           <Link
             to="/medical-records"
