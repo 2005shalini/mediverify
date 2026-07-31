@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import authService from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
 
@@ -14,6 +14,7 @@ function SignupForm() {
   const [success, setSuccess] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const validateForm = () => {
@@ -81,7 +82,11 @@ function SignupForm() {
       login(userObj, token);
       
       const userRole = String(userObj?.role || role).toLowerCase();
-      if (userRole === "doctor") {
+      const redirectParams = new URLSearchParams(location.search).get("redirect");
+      
+      if (redirectParams) {
+        navigate(redirectParams);
+      } else if (userRole === "doctor") {
         navigate("/doctor-dashboard");
       } else if (userRole === "admin" || userRole === "super admin") {
         navigate("/admin-dashboard");
@@ -210,7 +215,11 @@ function SignupForm() {
         Already have an account?{" "}
         <span
           className="text-blue-600 cursor-pointer font-medium hover:underline"
-          onClick={() => !loading && navigate("/login")}
+          onClick={() => {
+            if (loading) return;
+            const redirectParams = new URLSearchParams(location.search).get("redirect");
+            navigate(redirectParams ? `/login?redirect=${redirectParams}` : "/login");
+          }}
         >
           Login
         </span>

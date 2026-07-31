@@ -160,7 +160,11 @@ function LoginForm() {
         Don't have an account?{" "}
         <span
           className="text-blue-600 cursor-pointer font-medium hover:underline"
-          onClick={() => !loading && navigate("/signup")}
+          onClick={() => {
+            if (loading) return;
+            const redirectParams = new URLSearchParams(location.search).get("redirect");
+            navigate(redirectParams ? `/signup?redirect=${redirectParams}` : "/signup");
+          }}
         >
           Sign Up
         </span>
