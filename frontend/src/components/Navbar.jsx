@@ -12,10 +12,7 @@ function Navbar() {
     e.preventDefault();
     
     if (location.pathname !== "/") {
-      navigate(`/${id ? `#${id}` : ''}`);
-      // After navigation, the browser will jump to the hash, 
-      // but if we want smooth scroll we could handle it differently.
-      // For now, jumping to home page handles it.
+      navigate('/', { state: { scrollTo: id || 'home' } });
       return;
     }
     
@@ -51,12 +48,12 @@ function Navbar() {
       </div>
       
       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-        <a href="#" onClick={(e) => handleNavClick(e, null)} className="hover:text-blue-600 transition font-semibold cursor-pointer">Home</a>
-        <a href="#how-it-works" onClick={(e) => handleNavClick(e, 'how-it-works')} className="hover:text-blue-600 transition cursor-pointer">How it Works</a>
-        <a href="/doctors" onClick={(e) => { e.preventDefault(); navigate('/doctors'); }} className="hover:text-blue-600 transition cursor-pointer">Doctors</a>
-        <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="hover:text-blue-600 transition cursor-pointer">Features</a>
-        <a href="#testimonials" onClick={(e) => handleNavClick(e, 'testimonials')} className="hover:text-blue-600 transition cursor-pointer">Testimonials</a>
-        <a href="#faq" onClick={(e) => handleNavClick(e, 'faq')} className="hover:text-blue-600 transition cursor-pointer">FAQ</a>
+        <a onClick={(e) => handleNavClick(e, null)} className="hover:text-blue-600 transition font-semibold cursor-pointer">Home</a>
+        <a onClick={(e) => handleNavClick(e, 'how-it-works')} className="hover:text-blue-600 transition cursor-pointer">How It Works</a>
+        <a onClick={(e) => handleNavClick(e, 'features')} className="hover:text-blue-600 transition cursor-pointer">Features</a>
+        <a onClick={(e) => handleNavClick(e, 'doctors')} className="hover:text-blue-600 transition cursor-pointer">Doctors</a>
+        <a onClick={(e) => handleNavClick(e, 'testimonials')} className="hover:text-blue-600 transition cursor-pointer">Testimonials</a>
+        <a onClick={(e) => handleNavClick(e, 'faq')} className="hover:text-blue-600 transition cursor-pointer">FAQ</a>
       </div>
 
       <div className="hidden md:flex items-center gap-4">
