@@ -1,11 +1,36 @@
 import React from "react";
 import { ShieldCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  
+  const handleNavClick = (e, id) => {
+    e.preventDefault();
+    
+    if (location.pathname !== "/") {
+      navigate(`/${id ? `#${id}` : ''}`);
+      // After navigation, the browser will jump to the hash, 
+      // but if we want smooth scroll we could handle it differently.
+      // For now, jumping to home page handles it.
+      return;
+    }
+    
+    if (!id) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    
+    const element = document.getElementById(id);
+    if (element) {
+      const navbarHeight = 80;
+      const y = element.getBoundingClientRect().top + window.scrollY - navbarHeight;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
 
   const handleDashboard = () => {
     const role = String(user?.role || "").toLowerCase();
@@ -26,12 +51,12 @@ function Navbar() {
       </div>
       
       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-        <a href="#" className="text-blue-600 font-semibold">Home</a>
-        <a href="#how-it-works" className="hover:text-blue-600 transition">How it Works</a>
-        <a href="#" className="hover:text-blue-600 transition">Doctors</a>
-        <a href="#" className="hover:text-blue-600 transition">Features</a>
-        <a href="#" className="hover:text-blue-600 transition">Testimonials</a>
-        <a href="#" className="hover:text-blue-600 transition">FAQ</a>
+        <a href="#" onClick={(e) => handleNavClick(e, null)} className="hover:text-blue-600 transition font-semibold cursor-pointer">Home</a>
+        <a href="#how-it-works" onClick={(e) => handleNavClick(e, 'how-it-works')} className="hover:text-blue-600 transition cursor-pointer">How it Works</a>
+        <a href="/doctors" onClick={(e) => { e.preventDefault(); navigate('/doctors'); }} className="hover:text-blue-600 transition cursor-pointer">Doctors</a>
+        <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="hover:text-blue-600 transition cursor-pointer">Features</a>
+        <a href="#testimonials" onClick={(e) => handleNavClick(e, 'testimonials')} className="hover:text-blue-600 transition cursor-pointer">Testimonials</a>
+        <a href="#faq" onClick={(e) => handleNavClick(e, 'faq')} className="hover:text-blue-600 transition cursor-pointer">FAQ</a>
       </div>
 
       <div className="hidden md:flex items-center gap-4">

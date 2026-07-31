@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import authService from "../services/authService";
 
@@ -11,10 +11,16 @@ function LoginForm() {
 
   const { login, isAuthenticated, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Redirect automatically if user is already logged in
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
+      const redirectParams = new URLSearchParams(location.search).get("redirect");
+      if (redirectParams) {
+        navigate(redirectParams);
+        return;
+      }
       const role = String(user.role || "").toLowerCase();
       if (role.includes("admin")) {
         navigate("/admin-dashboard");
@@ -24,7 +30,7 @@ function LoginForm() {
         navigate("/dashboard");
       }
     }
-  }, [isAuthenticated, user, authLoading, navigate]);
+  }, [isAuthenticated, user, authLoading, navigate, location]);
 
   const validateForm = () => {
     if (!email || !email.trim()) {
@@ -62,13 +68,18 @@ function LoginForm() {
       login(userData, token);
 
       // Role based redirect
-      const role = String(userData.role || "").toLowerCase();
-      if (role.includes("admin")) {
-        navigate("/admin-dashboard");
-      } else if (role.includes("doctor")) {
-        navigate("/doctor-dashboard");
+      const redirectParams = new URLSearchParams(location.search).get("redirect");
+      if (redirectParams) {
+        navigate(redirectParams);
       } else {
-        navigate("/dashboard");
+        const role = String(userData.role || "").toLowerCase();
+        if (role.includes("admin")) {
+          navigate("/admin-dashboard");
+        } else if (role.includes("doctor")) {
+          navigate("/doctor-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (err) {
       console.error("Login error:", err);

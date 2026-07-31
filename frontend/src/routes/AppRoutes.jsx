@@ -37,11 +37,13 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
+        {/* Public Doctor Routes */}
+        <Route path="/doctors" element={<DoctorsDirectory />} />
+        <Route path="/doctors/:doctorId" element={<DoctorProfileView />} />
+
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/doctors" element={<DoctorsDirectory />} />
-          <Route path="/doctors/:doctorId" element={<DoctorProfileView />} />
           <Route path="/my-consultations" element={<MyConsultations />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />

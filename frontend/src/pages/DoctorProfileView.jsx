@@ -3,11 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Star, Clock, GraduationCap, Languages, CalendarCheck, FileText, Activity } from "lucide-react";
 import Sidebar from "../components/dashboard/Sidebar";
 import TopNavbar from "../components/dashboard/TopNavbar";
+import Navbar from "../components/Navbar";
+import { useAuth } from "../hooks/useAuth";
 import doctorService from "../services/doctorService";
 
 export default function DoctorProfileView() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,9 +37,9 @@ export default function DoctorProfileView() {
 
   return (
     <div className="min-h-screen bg-[#F4F7FE] font-sans">
-      <Sidebar />
-      <div className="ml-64 p-8 flex flex-col min-h-screen">
-        <TopNavbar />
+      {isAuthenticated ? <Sidebar /> : <Navbar />}
+      <div className={isAuthenticated ? "ml-64 p-8 flex flex-col min-h-screen" : "p-8 flex flex-col min-h-screen max-w-7xl mx-auto"}>
+        {isAuthenticated && <TopNavbar />}
 
         <div className="mt-4 max-w-5xl mx-auto w-full">
           {/* Back Button */}
@@ -235,14 +238,20 @@ export default function DoctorProfileView() {
                   </p>
 
                   <button 
-                    onClick={() => navigate("/create-consultation", { 
-                      state: { 
-                        doctorId: doctor.user_id || doctor.id, 
-                        doctorName: doctor.full_name, 
-                        doctorSpecialization: doctor.specialization, 
-                        fee: doctor.consultation_fee 
-                      } 
-                    })}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        navigate(`/login?redirect=${encodeURIComponent(`/create-consultation?doctor=${doctor.user_id || doctor.id}`)}`);
+                        return;
+                      }
+                      navigate("/create-consultation", { 
+                        state: { 
+                          doctorId: doctor.user_id || doctor.id, 
+                          doctorName: doctor.full_name, 
+                          doctorSpecialization: doctor.specialization, 
+                          fee: doctor.consultation_fee 
+                        } 
+                      });
+                    }}
                     className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-200"
                   >
                     Continue to Booking

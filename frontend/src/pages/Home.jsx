@@ -11,12 +11,12 @@ function Home() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <Hero />
+      <div id="hero"><Hero /></div>
       <Trusted />
-      <Features />
-      <HowItWorks />
-      <Testimonials />
-      <FAQ />
+      <div id="features"><Features /></div>
+      <div id="how-it-works"><HowItWorks /></div>
+      <div id="testimonials"><Testimonials /></div>
+      <div id="faq"><FAQ /></div>
       <Footer />
     </div>
   );

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Star, Clock, RefreshCcw, ChevronLeft, ChevronRight, Heart, Briefcase, User, Calendar, Globe, Building2, ChevronDown, CheckCircle2 } from "lucide-react";
 import Sidebar from "../components/dashboard/Sidebar";
 import TopNavbar from "../components/dashboard/TopNavbar";
+import Navbar from "../components/Navbar";
+import { useAuth } from "../hooks/useAuth";
 import doctorService from "../services/doctorService";
 
 const SPECIALIZATIONS = [
@@ -50,6 +52,7 @@ const getDoctorPhoto = (doc) => {
 
 export default function DoctorsDirectory() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -102,6 +105,10 @@ export default function DoctorsDirectory() {
   });
 
   const handleBookConsultation = (doc) => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(`/create-consultation?doctor=${doc.user_id || doc.id}`)}`);
+      return;
+    }
     navigate("/create-consultation", { 
       state: { 
         doctorId: doc.user_id || doc.id, 
@@ -118,9 +125,9 @@ export default function DoctorsDirectory() {
 
   return (
     <div className="min-h-screen bg-[#F4F7FE] font-sans">
-      <Sidebar />
-      <div className="ml-64 p-8 flex flex-col min-h-screen">
-        <TopNavbar />
+      {isAuthenticated ? <Sidebar /> : <Navbar />}
+      <div className={isAuthenticated ? "ml-64 p-8 flex flex-col min-h-screen" : "p-8 flex flex-col min-h-screen max-w-7xl mx-auto"}>
+        {isAuthenticated && <TopNavbar />}
 
         <div className="mt-4 flex flex-col xl:flex-row gap-8">
           
