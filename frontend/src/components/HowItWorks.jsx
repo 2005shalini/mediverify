@@ -20,6 +20,14 @@ import {
       }
     };
 
+    const handleAnalysisClick = () => {
+      if (isAuthenticated) {
+        navigate("/ai-analysis");
+      } else {
+        navigate("/signup?redirect=/ai-analysis");
+      }
+    };
+
     const steps = [
       {
         icon: <Upload size={40} className="text-blue-600" />,
@@ -82,8 +90,8 @@ import {
                 {/* Card */}
   
                 <div 
-                  className={`bg-slate-50 rounded-2xl p-8 text-center shadow-sm hover:shadow-xl transition duration-300 h-full ${index === 0 ? 'cursor-pointer ring-2 ring-transparent hover:ring-blue-100 hover:bg-blue-50/30' : ''}`}
-                  onClick={index === 0 ? handleUploadClick : undefined}
+                  className={`bg-slate-50 rounded-2xl p-8 text-center shadow-sm hover:shadow-xl transition duration-300 h-full ${index === 0 || index === 1 ? 'cursor-pointer ring-2 ring-transparent hover:ring-blue-100 hover:bg-blue-50/30' : ''}`}
+                  onClick={index === 0 ? handleUploadClick : index === 1 ? handleAnalysisClick : undefined}
                 >
   
                   <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
