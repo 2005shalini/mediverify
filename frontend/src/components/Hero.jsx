@@ -1,6 +1,36 @@
 import { CheckCircle2, PlayCircle, Bot } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 function Hero() {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+
+  const handleGetStartedClick = () => {
+    if (isAuthenticated) {
+      const role = String(user?.role || "").toLowerCase();
+      if (role.includes("admin")) {
+        navigate("/admin-dashboard");
+      } else if (role.includes("doctor")) {
+        navigate("/doctor-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } else {
+      navigate("/signup");
+    }
+  };
+
+  const handleHowItWorksClick = (e) => {
+    e.preventDefault();
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      const navbarHeight = 80;
+      const y = element.getBoundingClientRect().top + window.scrollY - navbarHeight;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="min-h-[calc(100vh-76px)] bg-slate-50 flex items-center overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 w-full py-12">
@@ -19,10 +49,16 @@ function Hero() {
 
             {/* CTA Buttons */}
             <div className="mt-8 flex items-center gap-5">
-              <button className="px-8 py-3.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+              <button 
+                onClick={handleGetStartedClick}
+                className="px-8 py-3.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
+              >
                 Get Started
               </button>
-              <a href="#how-it-works" className="flex items-center gap-2 px-6 py-3.5 text-gray-700 font-medium hover:text-blue-600 transition">
+              <a 
+                onClick={handleHowItWorksClick} 
+                className="flex items-center gap-2 px-6 py-3.5 text-gray-700 font-medium hover:text-blue-600 transition cursor-pointer"
+              >
                 <PlayCircle size={20} />
                 How It Works
               </a>
