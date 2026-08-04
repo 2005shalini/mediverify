@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, CheckSquare, Calendar, DollarSign, User, LogOut, CheckCircle } from "lucide-react";
+import { LayoutDashboard, Users, CheckSquare, Calendar, DollarSign, User, LogOut } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import Logo from "../Logo";
 
 export default function DoctorSidebar() {
   const { logout } = useAuth();
@@ -19,13 +20,8 @@ export default function DoctorSidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 shadow-sm flex flex-col justify-between">
       <div>
-        <div className="p-6 border-b border-gray-100 flex items-center gap-2">
-          <div className="text-blue-600">
-            <CheckCircle size={24} className="text-blue-600" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">
-            MediVerify
-          </h1>
+        <div className="p-6 border-b border-gray-100">
+          <Logo />
         </div>
 
         <nav className="mt-6 px-4 space-y-1">

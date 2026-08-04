@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, Activity, Settings, Stethoscope, FileText, LogOut } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import Logo from "../Logo";
 
 export default function AdminSidebar() {
   const location = useLocation();
@@ -25,14 +26,7 @@ export default function AdminSidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col z-20">
       <div className="h-20 flex items-center px-8 border-b border-gray-100">
-        <Link to="/admin-dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">+</span>
-          </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
-            MediVerify<span className="text-sm font-medium text-gray-400 ml-1">Admin</span>
-          </span>
-        </Link>
+        <Logo />
       </div>
 
       <div className="flex-1 py-8 px-4 flex flex-col gap-2 overflow-y-auto">

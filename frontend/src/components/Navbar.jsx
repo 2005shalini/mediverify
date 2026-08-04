@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck } from "lucide-react";
+import Logo from "./Logo";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -42,10 +42,7 @@ function Navbar() {
 
   return (
     <nav className="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-        <ShieldCheck className="text-blue-600" size={28} />
-        <h1 className="text-2xl font-bold text-gray-900">MediVerify</h1>
-      </div>
+      <Logo />
       
       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
         <a onClick={(e) => handleNavClick(e, null)} className="hover:text-blue-600 transition font-semibold cursor-pointer">Home</a>
